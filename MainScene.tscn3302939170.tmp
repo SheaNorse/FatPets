@@ -1,0 +1,27 @@
+[gd_scene format=3 uid="uid://cb2gcs6gpcges"]
+
+[ext_resource type="Script" uid="uid://co04yugpp7caa" path="res://Main.cs" id="1_3mqji"]
+[ext_resource type="Script" uid="uid://dy8jk2cvao4q6" path="res://DesktopPet.gd" id="2_rpqi1"]
+[ext_resource type="Texture2D" uid="uid://d0rnycyd4xalw" path="res://Characters-export-export.png" id="3_rpqi1"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_uxrcv"]
+radius = 98.1835
+
+[node name="Node2D" type="Node" unique_id=202102273]
+script = ExtResource("1_3mqji")
+
+[node name="CharacterBody2D" type="CharacterBody2D" parent="." unique_id=121617697]
+position = Vector2(265, 0)
+script = ExtResource("2_rpqi1")
+
+[node name="Sprite2D" type="Sprite2D" parent="CharacterBody2D" unique_id=966949875]
+texture_filter = 1
+position = Vector2(-197, 61)
+scale = Vector2(2, 2)
+texture = ExtResource("3_rpqi1")
+
+[node name="Area2D" type="Area2D" parent="CharacterBody2D" unique_id=1638284218]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D/Area2D" unique_id=336151043]
+position = Vector2(-197, 69)
+shape = SubResource("CircleShape2D_uxrcv")

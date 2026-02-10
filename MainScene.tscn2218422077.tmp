@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://cb2gcs6gpcges"]
+
+[ext_resource type="Script" uid="uid://co04yugpp7caa" path="res://ClickThroughHelper.cs" id="1_3mqji"]
+[ext_resource type="Script" uid="uid://dy8jk2cvao4q6" path="res://character_body_2d.gd" id="2_rpqi1"]
+[ext_resource type="Texture2D" uid="uid://cnvohscvpvvdu" path="res://Characters-export.png" id="2_x4av3"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rpqi1"]
+size = Vector2(92, 90.5)
+
+[node name="Node2D" type="Node2D" unique_id=517045380]
+
+[node name="CharacterBody2D" type="CharacterBody2D" parent="." unique_id=121617697]
+script = ExtResource("2_rpqi1")
+
+[node name="Sprite2D" type="Sprite2D" parent="CharacterBody2D" unique_id=966949875]
+position = Vector2(69, 65)
+texture = ExtResource("2_x4av3")
+
+[node name="Area2D" type="Area2D" parent="CharacterBody2D" unique_id=1855947193]
+disable_mode = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D/Area2D" unique_id=1116119427]
+position = Vector2(70, 66.25)
+shape = SubResource("RectangleShape2D_rpqi1")
+
+[node name="ClickThroughHelper" type="Node" parent="CharacterBody2D" unique_id=1750511166]
+script = ExtResource("1_3mqji")
+
+[connection signal="input_event" from="CharacterBody2D/Area2D" to="CharacterBody2D" method="_on_area_2d_input_event"]
+[connection signal="mouse_entered" from="CharacterBody2D/Area2D" to="CharacterBody2D" method="_on_area_2d_mouse_entered"]
+[connection signal="mouse_exited" from="CharacterBody2D/Area2D" to="." method="_on_area_2d_mouse_exited"]
