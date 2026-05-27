@@ -1,87 +1,19 @@
 [gd_scene format=3 uid="uid://cb2gcs6gpcges"]
 
 [ext_resource type="Script" uid="uid://co04yugpp7caa" path="res://DesktopPet.cs" id="1_3mqji"]
-[ext_resource type="Script" uid="uid://dy8jk2cvao4q6" path="res://DesktopPet.gd" id="2_rpqi1"]
-[ext_resource type="Texture2D" uid="uid://d0rnycyd4xalw" path="res://Characters-export-export.png" id="3_rpqi1"]
-[ext_resource type="Script" uid="uid://ca87ubruhmydt" path="res://Food.gd" id="4_rf2cd"]
-[ext_resource type="Texture2D" uid="uid://orcfiq8yu1jq" path="res://yummyball.png" id="4_uxrcv"]
-
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_rpqi1"]
-radius = 107.0
-height = 214.0
-
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_uxrcv"]
-radius = 107.0
-height = 214.0
-
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_rf2cd"]
-radius = 107.0
-height = 214.0
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_rf2cd"]
-radius = 14.142136
+[ext_resource type="PackedScene" uid="uid://6h1o4uvweqfv" path="res://Pet.tscn" id="2_uxrcv"]
+[ext_resource type="PackedScene" uid="uid://llreg4fc5c7c" path="res://Food.tscn" id="3_rpqi1"]
 
 [node name="Node2D" type="Node2D" unique_id=456174414]
 script = ExtResource("1_3mqji")
 
-[node name="CharacterBody2D" type="CharacterBody2D" parent="." unique_id=121617697 node_paths=PackedStringArray("desktop_pet_node")]
-script = ExtResource("2_rpqi1")
+[node name="Pet" parent="." unique_id=808091606 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
 desktop_pet_node = NodePath("..")
+floor_offset = 56.0
 
-[node name="Sprite2D" type="Sprite2D" parent="CharacterBody2D" unique_id=966949875]
-texture_filter = 1
-position = Vector2(0, -16)
-scale = Vector2(2, 2)
-texture = ExtResource("3_rpqi1")
-
-[node name="Area2D" type="Area2D" parent="CharacterBody2D" unique_id=1638284218]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D/Area2D" unique_id=336151043]
-position = Vector2(0, -18)
-shape = SubResource("CapsuleShape2D_rpqi1")
-
-[node name="CharacterBody2D2" type="CharacterBody2D" parent="." unique_id=418381169 node_paths=PackedStringArray("desktop_pet_node")]
-script = ExtResource("2_rpqi1")
+[node name="Area2D" parent="." unique_id=1288940946 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("3_rpqi1")]
 desktop_pet_node = NodePath("..")
-
-[node name="Sprite2D" type="Sprite2D" parent="CharacterBody2D2" unique_id=1635725328]
-texture_filter = 1
-position = Vector2(0, -16)
-scale = Vector2(2, 2)
-texture = ExtResource("3_rpqi1")
-
-[node name="Area2D" type="Area2D" parent="CharacterBody2D2" unique_id=281957927]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D2/Area2D" unique_id=720601980]
-position = Vector2(0, -18)
-shape = SubResource("CapsuleShape2D_uxrcv")
-
-[node name="CharacterBody2D3" type="CharacterBody2D" parent="." unique_id=62870336 node_paths=PackedStringArray("desktop_pet_node")]
-script = ExtResource("2_rpqi1")
-desktop_pet_node = NodePath("..")
-
-[node name="Sprite2D" type="Sprite2D" parent="CharacterBody2D3" unique_id=852785512]
-texture_filter = 1
-position = Vector2(0, -16)
-scale = Vector2(2, 2)
-texture = ExtResource("3_rpqi1")
-
-[node name="Area2D" type="Area2D" parent="CharacterBody2D3" unique_id=757638693]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D3/Area2D" unique_id=1840866635]
-position = Vector2(0, -18)
-shape = SubResource("CapsuleShape2D_rf2cd")
-
-[node name="Area2D" type="Area2D" parent="." unique_id=1830385771 node_paths=PackedStringArray("desktop_pet_node")]
-script = ExtResource("4_rf2cd")
-desktop_pet_node = NodePath("..")
-floor_offset = 0.0
-
-[node name="Sprite2D" type="Sprite2D" parent="Area2D" unique_id=400978148]
-texture = ExtResource("4_uxrcv")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=2055592947]
-shape = SubResource("CircleShape2D_rf2cd")
+floor_offset = 15.0
 
 [node name="Control" type="Control" parent="." unique_id=1065537389]
 layout_mode = 3

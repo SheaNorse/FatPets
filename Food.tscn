@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://llreg4fc5c7c"]
+
+[ext_resource type="Script" uid="uid://ca87ubruhmydt" path="res://Food.gd" id="1_myikp"]
+[ext_resource type="Texture2D" uid="uid://orcfiq8yu1jq" path="res://yummyball.png" id="2_oo3mi"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_rf2cd"]
+radius = 14.142136
+
+[node name="Food" type="Area2D" unique_id=1288940946]
+texture_filter = 1
+script = ExtResource("1_myikp")
+floor_offset = 0.0
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1064762161]
+texture = ExtResource("2_oo3mi")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=309149802]
+shape = SubResource("CircleShape2D_rf2cd")

@@ -3,8 +3,9 @@ extends CharacterBody2D
 @export var desktop_pet_node: Node
 @export var gravity_strength := 1000.0
 @export var floor_offset := 90.0
-@export var rotation_speed := 0.2
-@export var drag_smoothness := 15.0
+@export var rotation_speed := 0.01
+@export var smoothed_rotation := 0.0 
+@export var drag_smoothness := 100.0
 @export var bounce_strength := 0.5
 @export var bounce_damping := 0.8
 @export var throw_multiplier := 1.0
@@ -25,13 +26,26 @@ const INTERACTION_COOLDOWN_TIME := 1.0
 var previous_mouse_pos := Vector2.ZERO
 var vertical_velocity := 0.0
 var horizontal_velocity := 0.0
-var drag_velocity := Vector2.ZERO 
+var drag_velocity := Vector2.ZERO
+var pet_timer := 0.0          
+const PET_DURATION := 0.5    
+static var dragging_instance: int = -1  # stores instance ID of who owns the drag
 
 # --- PER-INSTANCE HOVER STATE ---
 var is_currently_hovered := false
-var last_mouse_position := Vector2.ZERO
-var hover_debounce_timer := 0.0  # NEW
-const HOVER_DEBOUNCE_DELAY := 0.15  # NEW: 150ms debounce
+var hover_debounce_timer := 0.0
+const HOVER_DEBOUNCE_DELAY := 0.15
+
+# --- MENU VARIABLES ---
+@onready var body_area = $Area2D
+@onready var petting_hitbox = $Petting 
+@onready var context_menu = $ContextMenu
+@onready var body = $Body
+@onready var eyes = $Body/Eyes
+@onready var mouth = $Body/Mouth
+@onready var particles = $Petting/PettingHitbox/GPUParticles2D
+@onready var petting_area = $Petting/PettingHitbox
+var is_menu_open := false
 
 func _ready() -> void:
 	input_pickable = true
@@ -41,66 +55,142 @@ func _ready() -> void:
 	global_position = Vector2(window_size.x / 2.0, 50.0)
 	vertical_velocity = 100.0
 	
+	if context_menu:
+		context_menu.visible = false
+	
+	connect_menu_buttons()
+	
 	var screen_count = desktop_pet_node.GetScreenCount()
 	print("Pet initialized. Available screens: ", screen_count)
 
+func get_unique_id() -> String:
+	return str(get_instance_id())
+
+func get_menu_id() -> String:
+	return str(get_instance_id()) + "_menu"
+
+func get_all_children(node: Node) -> Array:
+	var children = []
+	for child in node.get_children():
+		children.append(child)
+		children.append_array(get_all_children(child))
+	return children
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:
+		desktop_pet_node.ReportHoverState(false, get_unique_id())
+		desktop_pet_node.ReportHoverState(false, get_menu_id())
+
 func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
+		if event.pressed and is_mouse_over(1): # Check body layer for right click
+			toggle_menu(!is_menu_open)
+			get_viewport().set_input_as_handled()
+
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed and is_mouse_over():
-			dragging = true
-			is_wandering = false 
-			offset = global_position - event.global_position
-			previous_mouse_pos = get_global_mouse_position()
-			drag_velocity = Vector2.ZERO
-			vertical_velocity = 0.0
-			horizontal_velocity = 0.0
-			interaction_cooldown = INTERACTION_COOLDOWN_TIME
-		elif not event.pressed and dragging: 
+		if event.pressed:
+			# Only claim drag if nobody else has it
+			if is_mouse_over(1) and dragging_instance == -1:
+				dragging_instance = get_instance_id()
+				dragging = true
+				is_wandering = false
+				toggle_menu(false)
+				offset = global_position - event.global_position
+				previous_mouse_pos = get_global_mouse_position()
+				drag_velocity = Vector2.ZERO
+				vertical_velocity = 0.0
+				horizontal_velocity = 0.0
+				interaction_cooldown = INTERACTION_COOLDOWN_TIME
+				desktop_pet_node.ReportHoverState(true, get_unique_id())
+				is_currently_hovered = true
+
+		elif not event.pressed and dragging:
+			if dragging_instance == get_instance_id():
+				dragging_instance = -1  # release the lock
 			dragging = false
 			horizontal_velocity = drag_velocity.x * throw_multiplier
 			vertical_velocity = drag_velocity.y * throw_multiplier
 			interaction_cooldown = INTERACTION_COOLDOWN_TIME
+			is_currently_hovered = false
+			desktop_pet_node.ReportHoverState(false, get_unique_id())
 
-	# Screen Switching Keys
 	if event is InputEventKey and event.pressed:
 		if event.keycode == KEY_1: switch_to_screen(0)
 		elif event.keycode == KEY_2: switch_to_screen(1)
 		elif event.keycode == KEY_3: switch_to_screen(2)
 
 func _process(delta: float) -> void:
+	if dragging_instance == get_instance_id() and not dragging:
+		dragging_instance = -1
+		
 	interaction_cooldown -= delta
-	hover_debounce_timer -= delta  # NEW: Count down debounce timer
-
+	hover_debounce_timer -= delta
+	
 	if dragging:
 		process_dragging(delta)
 		return
 
 	update_hover_status()
+	
+	# Petting check runs every frame
+	process_petting(delta)
 
-	# Reset rotation when not being dragged
-	if abs(rotation) > 0.01:
+	if not dragging and abs(rotation) > 0.01:
 		rotation = lerp(rotation, 0.0, 10.0 * delta)
 	
-	apply_physics_and_wander(delta)
+	if not dragging:
+		apply_physics_and_wander(delta)
+
+func toggle_menu(open: bool) -> void:
+	if not context_menu: return
+	is_menu_open = open
+	context_menu.visible = open
+	
+	if is_menu_open:
+		desktop_pet_node.ReportHoverState(true, get_menu_id())
+	else:
+		desktop_pet_node.ReportHoverState(false, get_menu_id())
+		is_currently_hovered = is_mouse_over(1)
+		desktop_pet_node.ReportHoverState(is_currently_hovered, get_unique_id())
 
 func update_hover_status() -> void:
-	if dragging:
+	if dragging or is_menu_open:
 		return
 	
-	var mouse_over = is_mouse_over()
+	var mouse_over_pet = is_mouse_over(1) or is_mouse_over(2)  # 👈 include petting layer
+	var mouse_over_menu = is_mouse_over_menu()
+	var should_be_solid = mouse_over_pet or mouse_over_menu
 	
-	# ONLY act if the status has actually flipped
-	if mouse_over != is_currently_hovered:
-		# Check debounce timer
+	if should_be_solid != is_currently_hovered:
 		if hover_debounce_timer <= 0:
-			is_currently_hovered = mouse_over
-			# TELL C# TO CHANGE STYLE
-			desktop_pet_node.ReportHoverState(is_currently_hovered)
+			is_currently_hovered = should_be_solid
+			desktop_pet_node.ReportHoverState(is_currently_hovered, get_unique_id())
 			hover_debounce_timer = HOVER_DEBOUNCE_DELAY
 
-func process_dragging(delta: float) -> void:
-	var current_mouse_pos = get_viewport().get_mouse_position()
+func is_mouse_over_menu() -> bool:
+	if not context_menu or not context_menu.visible:
+		return false
 	
+	var mouse_pos = get_global_mouse_position()
+	
+	for child in context_menu.get_children():
+		if child is Control:
+			if child.get_global_rect().has_point(mouse_pos):
+				return true
+		for grandchild in child.get_children():
+			if grandchild is Control:
+				if grandchild.get_global_rect().has_point(mouse_pos):
+					return true
+	return false
+
+func process_dragging(delta: float) -> void:
+	if body:
+		body.play("Falling")
+	if eyes:
+		eyes.visible = false
+	if mouth:
+		mouth.visible = false
+	var current_mouse_pos = get_viewport().get_mouse_position()
 	drag_target = current_mouse_pos + offset
 	
 	var mouse_move_vec = current_mouse_pos - previous_mouse_pos
@@ -119,36 +209,42 @@ func apply_physics_and_wander(delta: float) -> void:
 	var floor_y = calculate_floor_y(pet_screen_pos, window_pos)
 	var grounded = global_position.y >= floor_y - 1.0
 
-	# --- HORIZONTAL MOVEMENT ---
 	if grounded:
 		if not is_wandering and randf() < wander_chance and interaction_cooldown <= 0:
 			start_wandering()
 		
 		if is_wandering:
+			body.play("Walking")
+			eyes.visible = false
+			mouth.visible = false
 			wander_timer -= delta
 			horizontal_velocity = wander_direction * walk_speed
 			if wander_timer <= 0:
 				is_wandering = false
 				horizontal_velocity = 0
 		else:
+			body.play("Breathing")
+			eyes.visible = true
+			mouth.visible = true
+			eyes.play("Blinking")
 			horizontal_velocity = move_toward(horizontal_velocity, 0, 500 * delta)
 	else:
 		is_wandering = false
 		horizontal_velocity *= 0.98
+		eyes.visible = false
+		mouth.visible = false
+		body.play("Falling")
 
 	global_position.x += horizontal_velocity * delta
 	handle_side_bounces()
 
-	# --- VERTICAL MOVEMENT ---
 	vertical_velocity += gravity_strength * delta
 	global_position.y += vertical_velocity * delta
 
-	# Ceiling Collision
 	if global_position.y <= 0:
 		global_position.y = 0
 		vertical_velocity = abs(vertical_velocity) * bounce_strength
 
-	# Floor Collision
 	if global_position.y >= floor_y:
 		if abs(vertical_velocity) > 50:
 			vertical_velocity = -abs(vertical_velocity) * bounce_strength
@@ -161,8 +257,18 @@ func start_wandering() -> void:
 	is_wandering = true
 	wander_timer = randf_range(1.5, 4.0)
 	wander_direction = 1.0 if randf() > 0.5 else -1.0
-	if has_node("Sprite2D"):
-		get_node("Sprite2D").flip_h = (wander_direction < 0)
+	if body:
+		var is_flipped = (wander_direction > 0)
+		body.flip_h = is_flipped
+		if eyes:
+			eyes.flip_h = is_flipped
+			eyes.position.x = 65.5 if is_flipped else -65.5
+		if mouth:
+			mouth.flip_h = is_flipped
+			mouth.position.x = 72.5 if is_flipped else -72.5
+		if petting_area:                                          
+			petting_area.position.x = 126.0 if is_flipped else -126.0
+		
 
 func calculate_floor_y(pet_pos: Vector2, win_pos: Vector2i) -> float:
 	for i in range(DisplayServer.get_screen_count()):
@@ -184,21 +290,31 @@ func handle_side_bounces() -> void:
 		horizontal_velocity = -abs(horizontal_velocity) * bounce_strength
 		is_wandering = false
 
-func is_mouse_over() -> bool:
+func process_petting(delta: float) -> void:
+	if dragging:
+		if particles: particles.emitting = false
+		return
+
+	if pet_timer > 0:
+		pet_timer -= delta
+		if particles: particles.emitting = true
+		return
+	
+	if particles: particles.emitting = false
+
+func is_mouse_over(mask: int = 1) -> bool:
 	var space_state = get_world_2d().direct_space_state
 	var query = PhysicsPointQueryParameters2D.new()
 	query.position = get_global_mouse_position()
+	query.collision_mask = mask
 	query.collide_with_areas = true
 	query.collide_with_bodies = true
-	var result = space_state.intersect_point(query, 32)
 	
-	# Check if THIS specific pet is under the mouse
+	var result = space_state.intersect_point(query, 32)
 	for collision in result:
-		if collision.collider == self or (collision.collider.get_parent() == self):
+		if collision.collider == body_area or collision.collider == petting_hitbox:
 			return true
 	return false
-	
-	
 
 func switch_to_screen(screen_index: int) -> void:
 	var screen_count = desktop_pet_node.GetScreenCount()
@@ -220,3 +336,38 @@ func switch_to_screen(screen_index: int) -> void:
 	global_position = Vector2(window_size.x / 2.0, window_size.y / 2.0)
 	vertical_velocity = 0.0
 	horizontal_velocity = 0.0
+	
+
+
+## CONTEXT MENU
+
+func connect_menu_buttons() -> void:
+	if not context_menu: return
+	
+	# Find buttons by name and connect them
+	var quit_btn = context_menu.find_child("QuitButton", true, false)
+	var sleep_btn = context_menu.find_child("SleepButton", true, false)
+	var dance_btn = context_menu.find_child("DanceButton", true, false)
+	
+	if quit_btn:
+		quit_btn.pressed.connect(_on_quit_pressed)
+	if sleep_btn:
+		sleep_btn.pressed.connect(_on_sleep_pressed)
+	if dance_btn:
+		dance_btn.pressed.connect(_on_dance_pressed)
+
+func _on_quit_pressed() -> void:
+	toggle_menu(false)
+	get_tree().quit()
+
+func _on_sleep_pressed() -> void:
+	toggle_menu(false)
+	is_wandering = false
+	horizontal_velocity = 0.0
+	# Play a sleep animation if you have one
+	if body: body.play("Sleeping")
+
+func _on_dance_pressed() -> void:
+	toggle_menu(false)
+	is_wandering = false
+	if body: body.play("Dancing")

@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
 
 public partial class DesktopPet : Node
 {
@@ -37,7 +38,6 @@ public partial class DesktopPet : Node
 	private const uint RDW_INVALIDATE = 0x0001;
 	private const uint RDW_UPDATENOW  = 0x0100;
 	private const uint RDW_ALLCHILDREN = 0x0080;
-
 	private const int SW_RESTORE = 9;
 	
 	[StructLayout(LayoutKind.Sequential)]
@@ -71,6 +71,8 @@ public partial class DesktopPet : Node
 	const uint MONITOR_DEFAULTTONEAREST = 2;
 	
 	private IntPtr _hwnd;
+	private bool? _isClickThroughEnabled = null;
+	private HashSet<string> _hoveredObjects = new HashSet<string>();
 	
 	public override void _Ready()
 	{
@@ -81,14 +83,8 @@ public partial class DesktopPet : Node
 		DisplayServer.WindowSetFlag(DisplayServer.WindowFlags.AlwaysOnTop, true);
 	}
 	
-	private bool _isCurrentClickThrough = false;
-
-	// Inside DesktopPet.cs
-	private bool? _isClickThroughEnabled = null; // Use nullable to force first set
-
 	public void SetClickThrough(bool enabled)
 	{
-		// 1. Same logic as before: prevent redundant calls
 		if (_isClickThroughEnabled == enabled) return;
 		_isClickThroughEnabled = enabled;
 
@@ -100,12 +96,28 @@ public partial class DesktopPet : Node
 		if (currentStyle != newStyle)
 		{
 			SetWindowLong(_hwnd, GWL_EXSTYLE, newStyle);
-			
-			// STANDARD FLICKER-FREE UPDATE: Use RedrawWindow for normal hovers
-			RedrawWindow(_hwnd, IntPtr.Zero, IntPtr.Zero, 0x0001 | 0x0100 | 0x0080);
+			RedrawWindow(_hwnd, IntPtr.Zero, IntPtr.Zero, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 		}
 	}
+	
+	public void ReportHoverState(bool isHovering, string objectId)
+	{
+		if (isHovering)
+			_hoveredObjects.Add(objectId);
+		else
+			_hoveredObjects.Remove(objectId);
+
+		GD.Print($"Hovered objects: {_hoveredObjects.Count} - {string.Join(", ", _hoveredObjects)}");
 		
+		SetClickThrough(_hoveredObjects.Count == 0);
+	}
+	
+	public void ClearAllHoverStates()
+	{
+		_hoveredObjects.Clear();
+		SetClickThrough(true);
+	}
+	
 	public RECT GetTaskbarInfo()
 	{
 		RECT rect = new RECT();
@@ -143,7 +155,7 @@ public partial class DesktopPet : Node
 		{
 			return taskbarRect.Height;
 		}
-		return 48; // Default fallback
+		return 48;
 	}
 	
 	public bool IsTaskbarOnScreen(int screenIndex)
@@ -152,7 +164,6 @@ public partial class DesktopPet : Node
 		var screenPos = DisplayServer.ScreenGetPosition(screenIndex);
 		var screenSize = DisplayServer.ScreenGetSize(screenIndex);
 		
-		// Check if taskbar intersects with this screen
 		bool intersects = !(taskbarRect.Right < screenPos.X || 
 							taskbarRect.Left > screenPos.X + screenSize.X ||
 							taskbarRect.Bottom < screenPos.Y || 
@@ -163,7 +174,6 @@ public partial class DesktopPet : Node
 	
 	public void ForceInputMapUpdate()
 	{
-		// SWP_FRAMECHANGED tells the OS: "The window definition changed, recalculate where clicks go!"
 		SetWindowPos(_hwnd, IntPtr.Zero, 0, 0, 0, 0, 
 			SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 	}
@@ -174,19 +184,14 @@ public partial class DesktopPet : Node
 
 		SetClickThrough(false);
 		
-		// 1. Move and Resize
 		DisplayServer.WindowSetCurrentScreen(screenIndex);
 		Vector2I screenSize = DisplayServer.ScreenGetSize(screenIndex);
 		DisplayServer.WindowSetSize(screenSize);
 		
-		// 2. IMPORTANT: Re-verify Godot's internal transparency
 		GetTree().Root.TransparentBg = true;
 
-		// 3. Give the OS a moment to settle the new window bounds
 		await ToSignal(GetTree().CreateTimer(0.2), SceneTreeTimer.SignalName.Timeout);
 
-		// 4. Force Windows to re-apply the Layered attribute
-		// This often clears the "Black Box" issue
 		int currentStyle = GetWindowLong(_hwnd, GWL_EXSTYLE);
 		SetWindowLong(_hwnd, GWL_EXSTYLE, currentStyle | WS_EX_LAYERED);
 		
@@ -194,7 +199,6 @@ public partial class DesktopPet : Node
 		SetClickThrough(true);
 		ForceInputMapUpdate();
 		
-		// 5. Final Paint Call
 		RedrawWindow(_hwnd, IntPtr.Zero, IntPtr.Zero, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 	}
 	
@@ -213,18 +217,5 @@ public partial class DesktopPet : Node
 		DisplayServer.WindowSetCurrentScreen(currentScreen);
 		
 		return workArea;
-	}
-	private int _hoveredPetsCount = 0;
-
-	public void ReportHoverState(bool isHovering)
-	{
-		if (isHovering) _hoveredPetsCount++;
-		else _hoveredPetsCount--;
-
-		// Clamp to ensure it doesn't go below 0
-		_hoveredPetsCount = Math.Max(0, _hoveredPetsCount);
-
-		// If even one pet is hovered, the window must be solid
-		SetClickThrough(_hoveredPetsCount == 0);
 	}
 }
