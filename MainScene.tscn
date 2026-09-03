@@ -14,9 +14,3 @@ floor_offset = 56.0
 [node name="Area2D" parent="." unique_id=1288940946 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("3_rpqi1")]
 desktop_pet_node = NodePath("..")
 floor_offset = 15.0
-
-[node name="Control" type="Control" parent="." unique_id=1065537389]
-layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0

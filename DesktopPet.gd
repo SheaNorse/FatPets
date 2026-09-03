@@ -16,6 +16,9 @@ extends CharacterBody2D
 var wander_timer := 0.0
 var is_wandering := false
 var wander_direction := 1.0 
+var is_relaxed := false  # <-- Tracks relaxed state
+
+@onready var SFX = $AudioStreamPlayer
 
 # --- STATE VARIABLES ---
 var dragging := false
@@ -40,12 +43,15 @@ const HOVER_DEBOUNCE_DELAY := 0.15
 @onready var body_area = $Area2D
 @onready var petting_hitbox = $Petting 
 @onready var context_menu = $ContextMenu
+@onready var state_menu = $ContextMenu/StateMenu
 @onready var body = $Body
 @onready var eyes = $Body/Eyes
 @onready var mouth = $Body/Mouth
 @onready var particles = $Petting/PettingHitbox/GPUParticles2D
 @onready var petting_area = $Petting/PettingHitbox
+
 var is_menu_open := false
+var state_enabled := false
 
 func _ready() -> void:
 	input_pickable = true
@@ -57,11 +63,19 @@ func _ready() -> void:
 	
 	if context_menu:
 		context_menu.visible = false
+	if state_menu:
+		state_menu.visible = false
 	
 	connect_menu_buttons()
 	
 	var screen_count = desktop_pet_node.GetScreenCount()
 	print("Pet initialized. Available screens: ", screen_count)
+
+func _enter_tree() -> void:
+	desktop_pet_node.RegisterPet()
+
+func _exit_tree() -> void:
+	desktop_pet_node.UnregisterPet(get_tree())
 
 func get_unique_id() -> String:
 	return str(get_instance_id())
@@ -83,13 +97,12 @@ func _notification(what: int) -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
-		if event.pressed and is_mouse_over(1): # Check body layer for right click
+		if event.pressed and is_mouse_over(1):
 			toggle_menu(!is_menu_open)
 			get_viewport().set_input_as_handled()
 
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
-			# Only claim drag if nobody else has it
 			if is_mouse_over(1) and dragging_instance == -1:
 				dragging_instance = get_instance_id()
 				dragging = true
@@ -106,7 +119,7 @@ func _input(event: InputEvent) -> void:
 
 		elif not event.pressed and dragging:
 			if dragging_instance == get_instance_id():
-				dragging_instance = -1  # release the lock
+				dragging_instance = -1
 			dragging = false
 			horizontal_velocity = drag_velocity.x * throw_multiplier
 			vertical_velocity = drag_velocity.y * throw_multiplier
@@ -131,8 +144,6 @@ func _process(delta: float) -> void:
 		return
 
 	update_hover_status()
-	
-	# Petting check runs every frame
 	process_petting(delta)
 
 	if not dragging and abs(rotation) > 0.01:
@@ -140,12 +151,25 @@ func _process(delta: float) -> void:
 	
 	if not dragging:
 		apply_physics_and_wander(delta)
+	
+	var overlapping = body_area.get_overlapping_areas()
+	
+	for area in overlapping:
+		if area is FoodArea and area.selected == false:
+			SFX.play()
+			area.queue_free()
 
 func toggle_menu(open: bool) -> void:
 	if not context_menu: return
 	is_menu_open = open
 	context_menu.visible = open
 	
+	# Close state submenu whenever context menu closes
+	if not open:
+		state_enabled = false
+		if state_menu:
+			state_menu.visible = false
+
 	if is_menu_open:
 		desktop_pet_node.ReportHoverState(true, get_menu_id())
 	else:
@@ -157,7 +181,7 @@ func update_hover_status() -> void:
 	if dragging or is_menu_open:
 		return
 	
-	var mouse_over_pet = is_mouse_over(1) or is_mouse_over(2)  # 👈 include petting layer
+	var mouse_over_pet = is_mouse_over(1) or is_mouse_over(2)
 	var mouse_over_menu = is_mouse_over_menu()
 	var should_be_solid = mouse_over_pet or mouse_over_menu
 	
@@ -172,15 +196,13 @@ func is_mouse_over_menu() -> bool:
 		return false
 	
 	var mouse_pos = get_global_mouse_position()
+	var all_menu_nodes = get_all_children(context_menu)
+	all_menu_nodes.append(context_menu)
 	
-	for child in context_menu.get_children():
-		if child is Control:
-			if child.get_global_rect().has_point(mouse_pos):
+	for node in all_menu_nodes:
+		if node is Control and node.is_visible_in_tree():
+			if node.get_global_rect().has_point(mouse_pos):
 				return true
-		for grandchild in child.get_children():
-			if grandchild is Control:
-				if grandchild.get_global_rect().has_point(mouse_pos):
-					return true
 	return false
 
 func process_dragging(delta: float) -> void:
@@ -210,7 +232,8 @@ func apply_physics_and_wander(delta: float) -> void:
 	var grounded = global_position.y >= floor_y - 1.0
 
 	if grounded:
-		if not is_wandering and randf() < wander_chance and interaction_cooldown <= 0:
+		# Check 'not is_relaxed' before starting a wander
+		if not is_relaxed and not is_wandering and randf() < wander_chance and interaction_cooldown <= 0:
 			start_wandering()
 		
 		if is_wandering:
@@ -248,9 +271,11 @@ func apply_physics_and_wander(delta: float) -> void:
 	if global_position.y >= floor_y:
 		if abs(vertical_velocity) > 50:
 			vertical_velocity = -abs(vertical_velocity) * bounce_strength
+			rotation *= 0.5
 		else:
 			vertical_velocity = 0
 			global_position.y = floor_y
+			rotation = 0.0
 		vertical_velocity *= bounce_damping
 
 func start_wandering() -> void:
@@ -266,9 +291,8 @@ func start_wandering() -> void:
 		if mouth:
 			mouth.flip_h = is_flipped
 			mouth.position.x = 72.5 if is_flipped else -72.5
-		if petting_area:                                          
+		if petting_area:                                         
 			petting_area.position.x = 126.0 if is_flipped else -126.0
-		
 
 func calculate_floor_y(pet_pos: Vector2, win_pos: Vector2i) -> float:
 	for i in range(DisplayServer.get_screen_count()):
@@ -336,38 +360,66 @@ func switch_to_screen(screen_index: int) -> void:
 	global_position = Vector2(window_size.x / 2.0, window_size.y / 2.0)
 	vertical_velocity = 0.0
 	horizontal_velocity = 0.0
-	
 
-
-## CONTEXT MENU
+## CONTEXT MENU & SUBMENU CONNECTORS
 
 func connect_menu_buttons() -> void:
 	if not context_menu: return
 	
-	# Find buttons by name and connect them
-	var quit_btn = context_menu.find_child("QuitButton", true, false)
-	var sleep_btn = context_menu.find_child("SleepButton", true, false)
-	var dance_btn = context_menu.find_child("DanceButton", true, false)
+	var quit_btn = context_menu.find_child("Switch", true, false)
+	var state_btn = context_menu.find_child("State", true, false)
+	var delete_btn = context_menu.find_child("Delete", true, false)
 	
-	if quit_btn:
-		quit_btn.pressed.connect(_on_quit_pressed)
-	if sleep_btn:
-		sleep_btn.pressed.connect(_on_sleep_pressed)
-	if dance_btn:
-		dance_btn.pressed.connect(_on_dance_pressed)
+	if quit_btn: quit_btn.pressed.connect(_on_quit_pressed)
+	if state_btn: state_btn.pressed.connect(_on_state_pressed)
+	if delete_btn: delete_btn.pressed.connect(_on_delete_pressed)
+	
+	var sleep_btn = context_menu.find_child("Sleep", true, false)
+	var sit_btn = context_menu.find_child("Sit", true, false)
+	var relax_btn = context_menu.find_child("Relax", true, false)
+	var reset_btn = context_menu.find_child("Reset", true, false)
+	
+	if sleep_btn: sleep_btn.pressed.connect(_on_sleep_pressed)
+	if sit_btn: sit_btn.pressed.connect(_on_sit_pressed)
+	if relax_btn: relax_btn.pressed.connect(_on_relax_pressed)
+	if reset_btn: reset_btn.pressed.connect(_on_reset_pressed)
 
 func _on_quit_pressed() -> void:
 	toggle_menu(false)
-	get_tree().quit()
+
+func _on_state_pressed() -> void:
+	state_enabled = !state_enabled
+	if state_menu:
+		state_menu.visible = state_enabled
+
+func _on_delete_pressed() -> void:
+	toggle_menu(false)
+	queue_free()
+
+# --- STATE SUBMENU HANDLERS ---
 
 func _on_sleep_pressed() -> void:
 	toggle_menu(false)
-	is_wandering = false
-	horizontal_velocity = 0.0
-	# Play a sleep animation if you have one
-	if body: body.play("Sleeping")
 
-func _on_dance_pressed() -> void:
+func _on_sit_pressed() -> void:
 	toggle_menu(false)
-	is_wandering = false
-	if body: body.play("Dancing")
+
+func _on_relax_pressed() -> void:
+	toggle_menu(false)
+	is_relaxed = !is_relaxed  # Toggle state
+	
+	if is_relaxed:
+		is_wandering = false
+		horizontal_velocity = 0.0
+
+func _on_reset_pressed() -> void:
+	toggle_menu(false)
+	is_relaxed = false  # Optionally clear relax state on reset
+
+func _on_area_2d_area_entered(area):
+	if area is FoodArea:
+		mouth.play("default")
+
+func _on_area_2d_area_exited(area):
+	if area is FoodArea:
+		mouth.play("default", -1, true)

@@ -5,6 +5,47 @@ using System.Collections.Generic;
 
 public partial class DesktopPet : Node
 {
+	// --- New Static Tracking Counters ---
+	private static int _petCount = 0;
+	private static int _foodCount = 0;
+
+	public static void RegisterPet()
+	{
+		_petCount++;
+		GD.Print($"Pet added. Total pets: {_petCount}");
+	}
+
+	public static void UnregisterPet(SceneTree tree)
+	{
+		_petCount--;
+		GD.Print($"Pet removed. Total pets: {_petCount}");
+		CheckRemainingElements(tree);
+	}
+
+	public static void RegisterFood()
+	{
+		_foodCount++;
+		GD.Print($"Food added. Total food: {_foodCount}");
+	}
+
+	public static void UnregisterFood(SceneTree tree)
+	{
+		_foodCount--;
+		GD.Print($"Food removed. Total food: {_foodCount}");
+		CheckRemainingElements(tree);
+	}
+
+	private static void CheckRemainingElements(SceneTree tree)
+	{
+		// Automatically closes the application if both counters reach zero
+		if (_petCount <= 0 && _foodCount <= 0)
+		{
+			GD.Print("No pets or food remaining! Automatically exiting application...");
+			tree.Quit();
+		}
+	}
+	// ------------------------------------
+
 	[DllImport("user32.dll")]
 	static extern int GetWindowLong(IntPtr hWnd, int nIndex);
 	

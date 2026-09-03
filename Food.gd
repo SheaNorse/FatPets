@@ -1,3 +1,4 @@
+class_name FoodArea
 extends Area2D
 
 @export var desktop_pet_node: Node
@@ -7,6 +8,8 @@ extends Area2D
 @export var bounce_damping := 0.7
 @export var floor_offset := 90.0
 @export var throw_multiplier := 1.0
+@export var selected = true
+
 
 var dragging := false
 var offset := Vector2.ZERO
@@ -23,6 +26,14 @@ static var dragging_instance: int = -1
 func _ready() -> void:
 	input_pickable = true
 	previous_mouse_pos = get_global_mouse_position()
+	
+func _enter_tree() -> void:
+	# Calls the static C# method to register this pet instance
+	desktop_pet_node.RegisterFood()
+
+func _exit_tree() -> void:
+	# Sends the SceneTree to the C# unregister method so it can handle application exit
+	desktop_pet_node.UnregisterFood(get_tree())
 
 func get_unique_id() -> String:
 	return str(get_instance_id())
@@ -36,6 +47,7 @@ func _input(event: InputEvent) -> void:
 		if event.pressed and is_mouse_over() and dragging_instance == -1:
 			dragging_instance = get_instance_id()
 			dragging = true
+			selected = true
 			offset = global_position - event.global_position
 			previous_mouse_pos = get_global_mouse_position()
 			drag_velocity = Vector2.ZERO
@@ -47,6 +59,7 @@ func _input(event: InputEvent) -> void:
 			if dragging_instance == get_instance_id():
 				dragging_instance = -1
 			dragging = false
+			selected = false
 			horizontal_velocity = drag_velocity.x * throw_multiplier
 			vertical_velocity = drag_velocity.y * throw_multiplier
 			is_currently_hovered = false
@@ -60,6 +73,7 @@ func _process(delta: float) -> void:
 		process_dragging(delta)
 	else:
 		apply_gravity(delta)
+		
 
 func update_hover_status() -> void:
 	if dragging:
