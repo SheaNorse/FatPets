@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dd8li33sjw2ox"
-path="res://.godot/imported/Pet Interface.png-f56ecc827567c7f77f2c08ab9c429b19.ctex"
+uid="uid://1sw8dxph70nl"
+path="res://.godot/imported/StarboyWalk.png-c0c10701cc663344c0119ea7b853006d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Pet Interface.png"
-dest_files=["res://.godot/imported/Pet Interface.png-f56ecc827567c7f77f2c08ab9c429b19.ctex"]
+source_file="res://Pets/Starboy/Animations/StarboyWalk.png"
+dest_files=["res://.godot/imported/StarboyWalk.png-c0c10701cc663344c0119ea7b853006d.ctex"]
 
 [params]
 

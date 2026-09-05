@@ -2,11 +2,12 @@
 
 [ext_resource type="Script" uid="uid://ca87ubruhmydt" path="res://Food.gd" id="1_myikp"]
 [ext_resource type="Texture2D" uid="uid://orcfiq8yu1jq" path="res://yummyball.png" id="2_oo3mi"]
+[ext_resource type="Script" uid="uid://bkqrw3jxih5dn" path="res://Pets/Starboy/FoodType.gd" id="3_oo3mi"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_rf2cd"]
 radius = 14.142136
 
-[node name="Food" type="Area2D" unique_id=82523170]
+[node name="Food" type="Node2D" unique_id=25398113]
 texture_filter = 1
 script = ExtResource("1_myikp")
 floor_offset = 0.0
@@ -14,5 +15,9 @@ floor_offset = 0.0
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1064762161]
 texture = ExtResource("2_oo3mi")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=309149802]
+[node name="FoodArea" type="Area2D" parent="." unique_id=57741498]
+script = ExtResource("3_oo3mi")
+metadata/_custom_type_script = "uid://bkqrw3jxih5dn"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="FoodArea" unique_id=309149802]
 shape = SubResource("CircleShape2D_rf2cd")

@@ -1,13 +1,125 @@
 [gd_scene format=3 uid="uid://cb2gcs6gpcges"]
 
-[ext_resource type="Script" uid="uid://co04yugpp7caa" path="res://DesktopPet.cs" id="1_3mqji"]
-[ext_resource type="PackedScene" uid="uid://6h1o4uvweqfv" path="res://Pet.tscn" id="2_uxrcv"]
+[ext_resource type="Script" uid="uid://co04yugpp7caa" path="res://Assets/DesktopPet.cs" id="1_3mqji"]
+[ext_resource type="PackedScene" uid="uid://byop432rxb1yp" path="res://Pets/Starboy/Starboy.tscn" id="2_rf2cd"]
+[ext_resource type="PackedScene" uid="uid://6h1o4uvweqfv" path="res://Pets/Kink/Kink.tscn" id="2_uxrcv"]
 [ext_resource type="PackedScene" uid="uid://llreg4fc5c7c" path="res://Food.tscn" id="3_rpqi1"]
 
 [node name="Node2D" type="Node2D" unique_id=456174414]
 script = ExtResource("1_3mqji")
 
-[node name="Pet" parent="." unique_id=808091606 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+[node name="Pet3" parent="." unique_id=808091606 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_rf2cd")]
+desktop_pet_node = NodePath("..")
+
+[node name="Pet" parent="." unique_id=2098000644 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet4" parent="." unique_id=958583587 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet5" parent="." unique_id=1716630116 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet6" parent="." unique_id=167911033 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet7" parent="." unique_id=1928135015 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet8" parent="." unique_id=1212714135 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet9" parent="." unique_id=1569699246 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet10" parent="." unique_id=750567008 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet11" parent="." unique_id=1148087447 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet12" parent="." unique_id=1923081819 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet13" parent="." unique_id=2056930449 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet14" parent="." unique_id=1249968887 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet15" parent="." unique_id=794546840 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet16" parent="." unique_id=2125595024 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet17" parent="." unique_id=1084068667 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet18" parent="." unique_id=556522634 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet19" parent="." unique_id=2073096406 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet20" parent="." unique_id=1676404839 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet21" parent="." unique_id=232985475 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet22" parent="." unique_id=992647167 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet23" parent="." unique_id=1452657530 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet24" parent="." unique_id=333400362 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet25" parent="." unique_id=658425248 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet26" parent="." unique_id=1589949910 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet27" parent="." unique_id=275638618 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet28" parent="." unique_id=2092830468 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet29" parent="." unique_id=671074849 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
+desktop_pet_node = NodePath("..")
+floor_offset = 56.0
+
+[node name="Pet2" parent="." unique_id=1020869359 node_paths=PackedStringArray("desktop_pet_node") instance=ExtResource("2_uxrcv")]
 desktop_pet_node = NodePath("..")
 floor_offset = 56.0
 

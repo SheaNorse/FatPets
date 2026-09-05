@@ -13,13 +13,15 @@ config_version=5
 config/name="FatPets"
 run/main_scene="uid://cb2gcs6gpcges"
 config/features=PackedStringArray("4.6", "C#", "GL Compatibility")
+boot_splash/bg_color=Color(0.14117648, 0.14117648, 0.14117648, 0)
+boot_splash/show_image=false
 config/icon="res://icon.svg"
 
 [display]
 
 window/size/viewport_width=720
 window/size/viewport_height=480
-window/size/mode=2
+window/size/mode=3
 window/size/borderless=true
 window/size/always_on_top=true
 window/size/transparent=true
@@ -28,6 +30,10 @@ window/per_pixel_transparency/allowed=true
 [dotnet]
 
 project/assembly_name="FatPets"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/pet_exporter/plugin.cfg")
 
 [physics]
 
@@ -38,4 +44,5 @@ project/assembly_name="FatPets"
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.3019608, 0.3019608, 0.3019608, 0)
 viewport/transparent_background=true

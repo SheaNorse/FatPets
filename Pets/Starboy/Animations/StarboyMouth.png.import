@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cnvohscvpvvdu"
-path="res://.godot/imported/Characters-export.png-c805a0b1ec082cd8f21aace46724355c.ctex"
+uid="uid://i32w1tsx6n8k"
+path="res://.godot/imported/StarboyMouth.png-55b89d7a19960176980f3d15d0667d33.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Characters-export.png"
-dest_files=["res://.godot/imported/Characters-export.png-c805a0b1ec082cd8f21aace46724355c.ctex"]
+source_file="res://Pets/Starboy/Animations/StarboyMouth.png"
+dest_files=["res://.godot/imported/StarboyMouth.png-55b89d7a19960176980f3d15d0667d33.ctex"]
 
 [params]
 

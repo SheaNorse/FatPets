@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bjnahvjmta4aq"
-path="res://.godot/imported/Pickup.png-adbbd3eb854be9a71277e2084ae87773.ctex"
+uid="uid://ctibrrawh7do4"
+path="res://.godot/imported/Walking.png-f96d6668e3d6603eabf447536605b6a8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Pickup.png"
-dest_files=["res://.godot/imported/Pickup.png-adbbd3eb854be9a71277e2084ae87773.ctex"]
+source_file="res://Pets/Kink/Animations/Walking.png"
+dest_files=["res://.godot/imported/Walking.png-f96d6668e3d6603eabf447536605b6a8.ctex"]
 
 [params]
 

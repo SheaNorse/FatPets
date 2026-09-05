@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bydy7i0avrxt6"
-path="res://.godot/imported/Blinking.png-f575ba3873e5b13d045b10f952d6c845.ctex"
+uid="uid://7kgb3e7a7y5a"
+path="res://.godot/imported/StarboySit.png-a3b4f10612a022141d3a859c7e5d52f6.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Blinking.png"
-dest_files=["res://.godot/imported/Blinking.png-f575ba3873e5b13d045b10f952d6c845.ctex"]
+source_file="res://Pets/Starboy/Animations/StarboySit.png"
+dest_files=["res://.godot/imported/StarboySit.png-a3b4f10612a022141d3a859c7e5d52f6.ctex"]
 
 [params]
 

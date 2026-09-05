@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cbv436fnrv38p"
-path="res://.godot/imported/Pet Interface2.png-d09775abde357938dd0a0a5dc730b486.ctex"
+uid="uid://dokb8qcsb4qh0"
+path="res://.godot/imported/Mouth.png-4bb5066404f4273bb86a6e237f25a44e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Pet Interface2.png"
-dest_files=["res://.godot/imported/Pet Interface2.png-d09775abde357938dd0a0a5dc730b486.ctex"]
+source_file="res://Pets/Kink/Animations/Mouth.png"
+dest_files=["res://.godot/imported/Mouth.png-4bb5066404f4273bb86a6e237f25a44e.ctex"]
 
 [params]
 

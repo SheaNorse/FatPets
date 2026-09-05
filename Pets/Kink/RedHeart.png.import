@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d0rnycyd4xalw"
-path="res://.godot/imported/Characters-export-export.png-48703b3cc6583fad5fd6cb3a6fb89379.ctex"
+uid="uid://bknhowccrkjq2"
+path="res://.godot/imported/RedHeart.png-03438302eb333a4637112de26a05f390.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Characters-export-export.png"
-dest_files=["res://.godot/imported/Characters-export-export.png-48703b3cc6583fad5fd6cb3a6fb89379.ctex"]
+source_file="res://Pets/Kink/RedHeart.png"
+dest_files=["res://.godot/imported/RedHeart.png-03438302eb333a4637112de26a05f390.ctex"]
 
 [params]
 

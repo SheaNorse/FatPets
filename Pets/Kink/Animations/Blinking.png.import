@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bjydfmhrdeulr"
-path="res://.godot/imported/Pet Interface3.png-8e97de89a4d57ad2df491dad39f5f278.ctex"
+uid="uid://bydy7i0avrxt6"
+path="res://.godot/imported/Blinking.png-b622ce62e0352b69ca467453b90bdfc3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Pet Interface3.png"
-dest_files=["res://.godot/imported/Pet Interface3.png-8e97de89a4d57ad2df491dad39f5f278.ctex"]
+source_file="res://Pets/Kink/Animations/Blinking.png"
+dest_files=["res://.godot/imported/Blinking.png-b622ce62e0352b69ca467453b90bdfc3.ctex"]
 
 [params]
 

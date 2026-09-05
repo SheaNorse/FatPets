@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bknhowccrkjq2"
-path="res://.godot/imported/RedHeart.png-6f196757e3f608b72cc296c4332cd572.ctex"
+uid="uid://dd8li33sjw2ox"
+path="res://.godot/imported/Pet Interface.png-b0084c7e955c359715f7995e8168f839.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/RedHeart.png"
-dest_files=["res://.godot/imported/RedHeart.png-6f196757e3f608b72cc296c4332cd572.ctex"]
+source_file="res://Pets/Kink/Pet Interface.png"
+dest_files=["res://.godot/imported/Pet Interface.png-b0084c7e955c359715f7995e8168f839.ctex"]
 
 [params]
 

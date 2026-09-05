@@ -10,7 +10,6 @@ extends Area2D
 @export var throw_multiplier := 1.0
 @export var selected = true
 
-
 var dragging := false
 var offset := Vector2.ZERO
 var is_currently_hovered := false
@@ -26,21 +25,41 @@ static var dragging_instance: int = -1
 func _ready() -> void:
 	input_pickable = true
 	previous_mouse_pos = get_global_mouse_position()
-	
+	_ensure_desktop_pet_node()
+
+## Attempts to auto-locate the desktop pet manager node if unassigned
+func _ensure_desktop_pet_node() -> void:
+	if is_instance_valid(desktop_pet_node):
+		return
+		
+	# Look up the tree or search unique nodes for DesktopPet manager
+	var root = get_tree().root
+	if root.has_node("DesktopPet"):
+		desktop_pet_node = root.get_node("DesktopPet")
+	elif get_parent() and "desktop_pet_node" in get_parent() and is_instance_valid(get_parent().desktop_pet_node):
+		desktop_pet_node = get_parent().desktop_pet_node
+	else:
+		# Fallback: Find any node exposing C# methods
+		var matches = get_tree().get_nodes_in_group("desktop_pet_manager")
+		if matches.size() > 0:
+			desktop_pet_node = matches[0]
+
 func _enter_tree() -> void:
-	# Calls the static C# method to register this pet instance
-	desktop_pet_node.RegisterFood()
+	_ensure_desktop_pet_node()
+	if is_instance_valid(desktop_pet_node) and desktop_pet_node.has_method("RegisterFood"):
+		desktop_pet_node.RegisterFood()
 
 func _exit_tree() -> void:
-	# Sends the SceneTree to the C# unregister method so it can handle application exit
-	desktop_pet_node.UnregisterFood(get_tree())
+	if is_instance_valid(desktop_pet_node) and desktop_pet_node.has_method("UnregisterFood"):
+		desktop_pet_node.UnregisterFood(get_tree())
 
 func get_unique_id() -> String:
 	return str(get_instance_id())
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
-		desktop_pet_node.ReportHoverState(false, get_unique_id())
+		if is_instance_valid(desktop_pet_node) and desktop_pet_node.has_method("ReportHoverState"):
+			desktop_pet_node.ReportHoverState(false, get_unique_id())
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
@@ -53,8 +72,11 @@ func _input(event: InputEvent) -> void:
 			drag_velocity = Vector2.ZERO
 			vertical_velocity = 0.0
 			horizontal_velocity = 0.0
-			desktop_pet_node.ReportHoverState(true, get_unique_id())
+			
+			if is_instance_valid(desktop_pet_node) and desktop_pet_node.has_method("ReportHoverState"):
+				desktop_pet_node.ReportHoverState(true, get_unique_id())
 			is_currently_hovered = true
+			
 		elif not event.pressed and dragging:
 			if dragging_instance == get_instance_id():
 				dragging_instance = -1
@@ -63,7 +85,9 @@ func _input(event: InputEvent) -> void:
 			horizontal_velocity = drag_velocity.x * throw_multiplier
 			vertical_velocity = drag_velocity.y * throw_multiplier
 			is_currently_hovered = false
-			desktop_pet_node.ReportHoverState(false, get_unique_id())
+			
+			if is_instance_valid(desktop_pet_node) and desktop_pet_node.has_method("ReportHoverState"):
+				desktop_pet_node.ReportHoverState(false, get_unique_id())
 
 func _process(delta: float) -> void:
 	hover_debounce_timer -= delta
@@ -73,7 +97,6 @@ func _process(delta: float) -> void:
 		process_dragging(delta)
 	else:
 		apply_gravity(delta)
-		
 
 func update_hover_status() -> void:
 	if dragging:
@@ -88,7 +111,8 @@ func update_hover_status() -> void:
 	
 	if mouse_over != is_currently_hovered and hover_debounce_timer <= 0:
 		is_currently_hovered = mouse_over
-		desktop_pet_node.ReportHoverState(is_currently_hovered, get_unique_id())
+		if is_instance_valid(desktop_pet_node) and desktop_pet_node.has_method("ReportHoverState"):
+			desktop_pet_node.ReportHoverState(is_currently_hovered, get_unique_id())
 		hover_debounce_timer = HOVER_DEBOUNCE_DELAY
 
 func process_dragging(delta: float) -> void:
@@ -135,12 +159,14 @@ func apply_gravity(delta: float) -> void:
 		vertical_velocity = abs(vertical_velocity) * bounce_strength
 
 func calculate_floor_y(food_pos: Vector2, win_pos: Vector2i) -> float:
-	for i in range(DisplayServer.get_screen_count()):
-		var s_pos = DisplayServer.screen_get_position(i)
-		var s_size = DisplayServer.screen_get_size(i)
-		if Rect2(s_pos, s_size).has_point(food_pos):
-			var taskbar = desktop_pet_node.GetTaskbarHeight() if desktop_pet_node.IsTaskbarOnScreen(i) else 0
-			return (s_pos.y + s_size.y) - win_pos.y - taskbar - floor_offset
+	_ensure_desktop_pet_node()
+	if is_instance_valid(desktop_pet_node) and desktop_pet_node.has_method("GetFloorPositionForScreen"):
+		for i in range(DisplayServer.get_screen_count()):
+			var s_pos = DisplayServer.screen_get_position(i)
+			var s_size = DisplayServer.screen_get_size(i)
+			if Rect2(s_pos, s_size).has_point(food_pos):
+				var global_floor_y = desktop_pet_node.GetFloorPositionForScreen(i)
+				return global_floor_y - win_pos.y - floor_offset
 	return DisplayServer.window_get_size().y - 48 - floor_offset
 
 func is_mouse_over() -> bool:

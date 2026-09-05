@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dlv73a1jpni2x"
-path="res://.godot/imported/Breathing.png-78694d39ef177cd2a0e7fffcd888f58a.ctex"
+uid="uid://cj1lis3ikch4r"
+path="res://.godot/imported/StarboySleep.png-58eb4b98ef053a06e5c9bd65beffc29e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Breathing.png"
-dest_files=["res://.godot/imported/Breathing.png-78694d39ef177cd2a0e7fffcd888f58a.ctex"]
+source_file="res://Pets/Starboy/Animations/StarboySleep.png"
+dest_files=["res://.godot/imported/StarboySleep.png-58eb4b98ef053a06e5c9bd65beffc29e.ctex"]
 
 [params]
 

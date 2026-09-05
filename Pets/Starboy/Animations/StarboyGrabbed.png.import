@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ctibrrawh7do4"
-path="res://.godot/imported/Walking.png-302ac8b321f185a63477421be2a712c0.ctex"
+uid="uid://bpvps725yo3gx"
+path="res://.godot/imported/StarboyGrabbed.png-4db8ad3a5ca698bb8abae631ccd62598.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Walking.png"
-dest_files=["res://.godot/imported/Walking.png-302ac8b321f185a63477421be2a712c0.ctex"]
+source_file="res://Pets/Starboy/Animations/StarboyGrabbed.png"
+dest_files=["res://.godot/imported/StarboyGrabbed.png-4db8ad3a5ca698bb8abae631ccd62598.ctex"]
 
 [params]
 
