@@ -9,6 +9,7 @@
 [node name="Pet3" parent="." unique_id=808091606 instance=ExtResource("2_rf2cd")]
 
 [node name="Food" parent="." unique_id=82523170 instance=ExtResource("3_rpqi1")]
+z_index = 10
 
 [node name="Pet" parent="." unique_id=2098000644 instance=ExtResource("2_uxrcv")]
 floor_offset = 56.0

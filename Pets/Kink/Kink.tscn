@@ -1083,7 +1083,6 @@ Button/styles/pressed = SubResource("StyleBoxFlat_42b7b")
 [node name="Pet" type="CharacterBody2D" unique_id=808091606]
 script = ExtResource("1_log3j")
 floor_offset = 50.0
-is_edible = true
 
 [node name="Body" type="AnimatedSprite2D" parent="." unique_id=664938289]
 texture_filter = 1
