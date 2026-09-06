@@ -79,6 +79,20 @@ func _input(event: InputEvent) -> void:
 			
 			if is_instance_valid(DesktopPet) and DesktopPet.has_method("ReportHoverState"):
 				DesktopPet.ReportHoverState(false, get_unique_id())
+			
+			# Defer execution by 1 frame to allow physics/states to settle,
+			# then trigger eating checks on any pets currently under this food item.
+			call_deferred("_notify_pets_of_drop")
+
+func _notify_pets_of_drop() -> void:
+	var overlapping = get_overlapping_areas()
+	for area in overlapping:
+		var target_node = area.get_parent()
+		if target_node is CharacterBody2D and target_node.has_method("_check_eat_on_release"):
+			# REMOVED: if target_node.get("can_eat") == true:
+			# All pets can receive drop notifications for regular food regardless of can_eat
+			target_node._check_eat_on_release()
+			break
 
 func _process(delta: float) -> void:
 	hover_debounce_timer -= delta

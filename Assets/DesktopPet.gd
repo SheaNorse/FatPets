@@ -5,13 +5,18 @@ extends CharacterBody2D
 @export var floor_offset := 90.0
 @export var rotation_speed := 0.01
 @export var smoothed_rotation := 0.0 
-@export var drag_smoothness := 25.0 # Adjusted for frame-independent decay rate
+@export var drag_smoothness := 25.0
 @export var bounce_strength := 0.5
 @export var bounce_damping := 0.8
 @export var throw_multiplier := 1.0
 
-# --- EDIBLE PET SETTING ---
+# --- EDIBLE & PREDATOR SETTINGS ---
+# Check this if THIS pet can be eaten by predators.
 @export var is_edible := false
+
+# Check this if THIS pet is allowed to eat OTHER EDIBLE PETS.
+# (Note: Regular food items can be eaten by ALL pets regardless of this setting).
+@export var can_eat := true
 
 # --- PER-PET FLIP OFFSETS ---
 @export var eyes_offset_x_override := -1.0
@@ -23,8 +28,8 @@ extends CharacterBody2D
 
 # --- WANDER & FRICTION SETTINGS ---
 @export var walk_speed := 150.0
-@export var walk_acceleration := 600.0 # How quickly the pet speeds up to walk_speed
-@export var walk_friction := 800.0     # How quickly the pet slows down to a stop
+@export var walk_acceleration := 600.0
+@export var walk_friction := 800.0
 @export var wander_chance := 0.0025
 var wander_timer := 0.0
 var is_wandering := false
@@ -102,17 +107,19 @@ func _ready() -> void:
 	_resolve_flip_offsets()
 	connect_menu_buttons()
 	_setup_edible_status()
-	
-	if is_instance_valid(DesktopPet):
-		var screen_count = DesktopPet.GetScreenCount()
-		print("Pet initialized. Available screens: ", screen_count)
 
 func _setup_edible_status() -> void:
-	if is_edible and body_area:
+	if not body_area:
+		return
+		
+	if is_edible:
 		if not body_area is FoodArea and not body_area.has_node("FoodAreaMarker"):
-			var food_marker = FoodArea.new()
+			var food_marker = Node.new()
 			food_marker.name = "FoodAreaMarker"
 			body_area.add_child(food_marker)
+	else:
+		if body_area.has_node("FoodAreaMarker"):
+			body_area.get_node("FoodAreaMarker").queue_free()
 
 func _resolve_flip_offsets() -> void:
 	var override_sign := 1.0 if invert_facing_direction else -1.0
@@ -167,7 +174,7 @@ func _notification(what: int) -> void:
 func bring_to_front() -> void:
 	var parent = get_parent()
 	if parent:
-		parent.move_child(self, -1)
+		parent.move_child(self, parent.get_child_count() - 1)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if is_menu_open and event is InputEventMouseButton and event.pressed:
@@ -188,7 +195,7 @@ func _input(event: InputEvent) -> void:
 				dragging_instance = get_instance_id()
 				dragging = true
 				bring_to_front()
-				set_state(State.NORMAL) # Reset action state when grabbed
+				set_state(State.NORMAL)
 				is_wandering = false
 				toggle_menu(false)
 				offset = global_position - event.global_position
@@ -206,7 +213,8 @@ func _input(event: InputEvent) -> void:
 				dragging_instance = -1
 			dragging = false
 			
-			_check_eat_on_release()
+			# Defer check so input/position states finish settling on this frame
+			call_deferred("_check_eat_on_release")
 
 			horizontal_velocity = drag_velocity.x * throw_multiplier
 			vertical_velocity = drag_velocity.y * throw_multiplier
@@ -214,11 +222,6 @@ func _input(event: InputEvent) -> void:
 			is_currently_hovered = false
 			if is_instance_valid(DesktopPet):
 				DesktopPet.ReportHoverState(false, get_unique_id())
-
-	if event is InputEventKey and event.pressed:
-		if event.keycode == KEY_1: switch_to_screen(0)
-		elif event.keycode == KEY_2: switch_to_screen(1)
-		elif event.keycode == KEY_3: switch_to_screen(2)
 
 func _process(delta: float) -> void:
 	if dragging_instance == get_instance_id() and not dragging:
@@ -239,11 +242,6 @@ func _process(delta: float) -> void:
 	
 	if not dragging:
 		apply_physics_and_wander(delta)
-	
-	var overlapping = body_area.get_overlapping_areas()
-	for area in overlapping:
-		if not (area.get_parent() is CharacterBody2D):
-			_check_and_eat_area(area)
 
 func set_state(new_state: State) -> void:
 	current_state = new_state
@@ -252,63 +250,70 @@ func set_state(new_state: State) -> void:
 		is_wandering = false
 		horizontal_velocity = 0.0
 
-	# Handle Sleeping Particle Emission
 	if sleeping_particles:
 		sleeping_particles.emitting = (current_state == State.SLEEPING)
 
-	# Align eyes with sitting anchor or revert to default position
 	if eyes:
 		if current_state == State.SITTING and sitting_anchor:
 			var target_x = sitting_anchor.position.x
-			if body.flip_h:
+			if body and body.flip_h:
 				target_x = -target_x
 			eyes.position = Vector2(target_x, sitting_anchor.position.y)
 		else:
 			var target_x = eyes_base_x
-			if body.flip_h:
+			if body and body.flip_h:
 				target_x = -eyes_base_x
 			eyes.position = Vector2(target_x, eyes_default_position.y)
 
+# Called when THIS PET is dropped after being dragged
 func _check_eat_on_release() -> void:
+	if not body_area:
+		return
+
 	var overlapping = body_area.get_overlapping_areas()
+	
 	for area in overlapping:
 		if area == body_area or area.get_parent() == self:
 			continue
 			
-		if area is FoodArea or area.has_node("FoodAreaMarker"):
-			var target_node = area.get_parent()
-			
-			if target_node is CharacterBody2D:
-				if target_node.get("is_menu_open") == true:
-					continue
-
-				var target_is_dragged = target_node.get("dragging") == true
-				
-				if not target_is_dragged:
-					if target_node.has_method("play_sfx"):
-						target_node.play_sfx()
-					elif target_node.get("SFX"):
-						target_node.SFX.play()
-					else:
-						SFX.play()
-					
-					queue_free()
-					return
-
-func _check_and_eat_area(area: Area2D) -> void:
-	if area == body_area or area.get_parent() == self:
-		return
-		
-	if area is FoodArea or area.has_node("FoodAreaMarker"):
-		var is_selected = area.get("selected")
-		if is_selected == true:
-			return
-
 		var target_node = area.get_parent()
-		
-		if not (target_node is CharacterBody2D):
-			SFX.play()
-			area.queue_free()
+
+		# 1. REGULAR FOOD (ALL pets can eat standard food items)
+		if _is_food_area(area):
+			if not (target_node is CharacterBody2D):
+				_consume_target(area)
+				return
+
+		# 2. THIS PET IS A PREDATOR DROPPED ONTO AN EDIBLE PET
+		if can_eat and target_node is CharacterBody2D:
+			if target_node.get("is_edible") == true and target_node.get("is_menu_open") != true:
+				_consume_target(target_node)
+				return
+
+		# 3. THIS PET IS EDIBLE AND WAS DROPPED ONTO A PREDATOR PET
+		if is_edible and target_node is CharacterBody2D:
+			if target_node.get("can_eat") == true and target_node.get("is_menu_open") != true:
+				_consume_target(self)
+				return
+
+func _is_food_area(area: Area2D) -> bool:
+	if area is FoodArea:
+		return true
+	if area.has_node("FoodAreaMarker") or area.name == "FoodArea":
+		return true
+	if area.get_parent() != null and area.get_parent().name.to_lower().contains("food"):
+		return true
+	return false
+
+func _consume_target(node_to_destroy: Node) -> void:
+	if node_to_destroy.has_method("play_sfx"):
+		node_to_destroy.play_sfx()
+	elif node_to_destroy.get("SFX") != null and node_to_destroy.SFX is AudioStreamPlayer:
+		node_to_destroy.SFX.play()
+	elif SFX:
+		SFX.play()
+
+	node_to_destroy.queue_free()
 
 func play_sfx() -> void:
 	if SFX:
@@ -395,22 +400,23 @@ func apply_physics_and_wander(delta: float) -> void:
 
 	if grounded:
 		if current_state == State.SLEEPING:
-			body.play("Sleeping")
-			eyes.visible = false
-			mouth.visible = false
+			if body: body.play("Sleeping")
+			if eyes: eyes.visible = false
+			if mouth: mouth.visible = false
 		elif current_state == State.SITTING:
-			body.play("Sitting")
-			eyes.visible = true
-			mouth.visible = true
-			eyes.play("Blinking")
+			if body: body.play("Sitting")
+			if eyes:
+				eyes.visible = true
+				eyes.play("Blinking")
+			if mouth: mouth.visible = true
 		else:
 			if current_state != State.RELAXED and not is_wandering and randf() < wander_chance and interaction_cooldown <= 0:
 				start_wandering()
 			
 			if is_wandering:
-				body.play("Walking")
-				eyes.visible = false
-				mouth.visible = false
+				if body: body.play("Walking")
+				if eyes: eyes.visible = false
+				if mouth: mouth.visible = false
 				wander_timer -= delta
 				
 				var target_speed = wander_direction * walk_speed
@@ -422,20 +428,21 @@ func apply_physics_and_wander(delta: float) -> void:
 				horizontal_velocity = move_toward(horizontal_velocity, 0.0, walk_friction * delta)
 				
 				if abs(horizontal_velocity) < 10.0:
-					body.play("Breathing")
-					eyes.visible = true
-					mouth.visible = true
-					eyes.play("Blinking")
+					if body: body.play("Breathing")
+					if eyes:
+						eyes.visible = true
+						eyes.play("Blinking")
+					if mouth: mouth.visible = true
 				else:
-					body.play("Walking")
-					eyes.visible = false
-					mouth.visible = false
+					if body: body.play("Walking")
+					if eyes: eyes.visible = false
+					if mouth: mouth.visible = false
 	else:
 		is_wandering = false
 		horizontal_velocity *= 0.98
-		eyes.visible = false
-		mouth.visible = false
-		body.play("Falling")
+		if eyes: eyes.visible = false
+		if mouth: mouth.visible = false
+		if body: body.play("Falling")
 
 	global_position.x += horizontal_velocity * delta
 	handle_side_bounces()
@@ -483,11 +490,8 @@ func _apply_facing_flip(is_flipped: bool) -> void:
 	if petting_area:
 		petting_area.position.x = -petting_area_base_x if is_flipped else petting_area_base_x
 		
-	# Flip particle position and direction safely for CPUParticles2D
 	if sleeping_particles:
 		sleeping_particles.position.x = -sleeping_particles_base_x if is_flipped else sleeping_particles_base_x
-		
-		# Invert the horizontal direction directly on CPUParticles2D
 		var base_dir = abs(sleeping_particles.direction.x) if sleeping_particles.direction.x != 0 else 1.0
 		sleeping_particles.direction.x = -base_dir if is_flipped else base_dir
 
@@ -537,12 +541,6 @@ func is_mouse_over(mask: int = 1) -> bool:
 			return true
 	return false
 
-func switch_to_screen(screen_index: int) -> void:
-	if is_instance_valid(DesktopPet):
-		DesktopPet.SwitchToScreen(screen_index, self)
-
-## CONTEXT MENU & SUBMENU CONNECTORS
-
 func connect_menu_buttons() -> void:
 	if not context_menu: return
 	
@@ -576,8 +574,6 @@ func _on_delete_pressed() -> void:
 	toggle_menu(false)
 	queue_free()
 
-# --- STATE SUBMENU HANDLERS ---
-
 func _on_sleep_pressed() -> void:
 	toggle_menu(false)
 	set_state(State.SLEEPING)
@@ -593,17 +589,18 @@ func _on_relax_pressed() -> void:
 func _on_reset_pressed() -> void:
 	toggle_menu(false)
 	is_wandering = false
-	interaction_cooldown = 0.0 # Reset cooldown so wander can start right away
+	interaction_cooldown = 0.0
 	set_state(State.NORMAL)
 	start_wandering()
 
+# Visual mouth hover feedback
 func _on_area_2d_area_entered(area):
-	if (area is FoodArea or area.has_node("FoodAreaMarker")) and area != body_area and area.get_parent() != self:
+	if area != body_area and area.get_parent() != self:
 		var target_node = area.get_parent()
-		if target_node is CharacterBody2D and (target_node.get("dragging") == true or target_node.get("is_menu_open") == true):
-			return
-		mouth.play("default")
+		# Open mouth for regular food OR predator pets near edible targets
+		if _is_food_area(area) or (can_eat and target_node is CharacterBody2D and target_node.get("is_edible") == true):
+			if mouth: mouth.play("default")
 
 func _on_area_2d_area_exited(area):
-	if (area is FoodArea or area.has_node("FoodAreaMarker")) and area != body_area and area.get_parent() != self:
-		mouth.play("default", -1, true)
+	if area != body_area and area.get_parent() != self:
+		if mouth: mouth.play("default", -1, true)

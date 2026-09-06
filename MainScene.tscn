@@ -7,9 +7,163 @@
 [node name="MainScene" type="Node2D" unique_id=456174414]
 
 [node name="Pet3" parent="." unique_id=808091606 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet4" parent="." unique_id=731558837 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet5" parent="." unique_id=1298439503 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet6" parent="." unique_id=1576600759 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet7" parent="." unique_id=1011275414 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet8" parent="." unique_id=1652994464 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet9" parent="." unique_id=1321614762 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet10" parent="." unique_id=2077222590 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet11" parent="." unique_id=1148714261 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet12" parent="." unique_id=2144231979 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet13" parent="." unique_id=1987385730 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet14" parent="." unique_id=1073246991 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet15" parent="." unique_id=1929577748 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet16" parent="." unique_id=1840300905 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet17" parent="." unique_id=1560924010 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet18" parent="." unique_id=692272263 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet19" parent="." unique_id=773820877 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet20" parent="." unique_id=851109777 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet21" parent="." unique_id=2061477863 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet22" parent="." unique_id=1742297706 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet23" parent="." unique_id=1180275321 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet24" parent="." unique_id=583503236 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet25" parent="." unique_id=146539470 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet26" parent="." unique_id=1755452811 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet27" parent="." unique_id=2064668418 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet28" parent="." unique_id=568870438 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet29" parent="." unique_id=897255176 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet30" parent="." unique_id=914946239 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet31" parent="." unique_id=63194476 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet32" parent="." unique_id=1206318714 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet33" parent="." unique_id=1636299781 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet34" parent="." unique_id=526754109 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet35" parent="." unique_id=1166364852 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet36" parent="." unique_id=797738063 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet37" parent="." unique_id=1851859324 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet38" parent="." unique_id=604205155 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet39" parent="." unique_id=184235280 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet40" parent="." unique_id=36832672 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet41" parent="." unique_id=1864649252 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet42" parent="." unique_id=212689849 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet43" parent="." unique_id=639045625 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet44" parent="." unique_id=1128714638 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet45" parent="." unique_id=674230358 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet46" parent="." unique_id=1257497359 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet47" parent="." unique_id=970160098 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet48" parent="." unique_id=2097504031 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet49" parent="." unique_id=66179611 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet50" parent="." unique_id=258405048 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet51" parent="." unique_id=1176084173 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet52" parent="." unique_id=1458997747 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet53" parent="." unique_id=1584062595 instance=ExtResource("2_rf2cd")]
+can_eat = false
+
+[node name="Pet54" parent="." unique_id=578217433 instance=ExtResource("2_rf2cd")]
+can_eat = false
 
 [node name="Food" parent="." unique_id=82523170 instance=ExtResource("3_rpqi1")]
-z_index = 10
+floor_offset = 90.0
 
 [node name="Pet" parent="." unique_id=2098000644 instance=ExtResource("2_uxrcv")]
 floor_offset = 56.0
