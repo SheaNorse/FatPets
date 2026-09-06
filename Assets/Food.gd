@@ -1,7 +1,6 @@
 class_name FoodArea
 extends Area2D
 
-@export var desktop_pet_node: Node
 @export var drag_smoothness := 15.0
 @export var gravity_strength := 800.0
 @export var bounce_strength := 0.3
@@ -25,41 +24,32 @@ static var dragging_instance: int = -1
 func _ready() -> void:
 	input_pickable = true
 	previous_mouse_pos = get_global_mouse_position()
-	_ensure_desktop_pet_node()
-
-## Attempts to auto-locate the desktop pet manager node if unassigned
-func _ensure_desktop_pet_node() -> void:
-	if is_instance_valid(desktop_pet_node):
-		return
-		
-	# Look up the tree or search unique nodes for DesktopPet manager
-	var root = get_tree().root
-	if root.has_node("DesktopPet"):
-		desktop_pet_node = root.get_node("DesktopPet")
-	elif get_parent() and "desktop_pet_node" in get_parent() and is_instance_valid(get_parent().desktop_pet_node):
-		desktop_pet_node = get_parent().desktop_pet_node
-	else:
-		# Fallback: Find any node exposing C# methods
-		var matches = get_tree().get_nodes_in_group("desktop_pet_manager")
-		if matches.size() > 0:
-			desktop_pet_node = matches[0]
 
 func _enter_tree() -> void:
-	_ensure_desktop_pet_node()
-	if is_instance_valid(desktop_pet_node) and desktop_pet_node.has_method("RegisterFood"):
-		desktop_pet_node.RegisterFood()
+	if is_instance_valid(DesktopPet) and DesktopPet.has_method("RegisterFood"):
+		DesktopPet.RegisterFood()
 
 func _exit_tree() -> void:
-	if is_instance_valid(desktop_pet_node) and desktop_pet_node.has_method("UnregisterFood"):
-		desktop_pet_node.UnregisterFood(get_tree())
+	if is_instance_valid(DesktopPet) and DesktopPet.has_method("UnregisterFood"):
+		DesktopPet.UnregisterFood(get_tree())
 
 func get_unique_id() -> String:
 	return str(get_instance_id())
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
-		if is_instance_valid(desktop_pet_node) and desktop_pet_node.has_method("ReportHoverState"):
-			desktop_pet_node.ReportHoverState(false, get_unique_id())
+		if is_instance_valid(DesktopPet) and DesktopPet.has_method("ReportHoverState"):
+			DesktopPet.ReportHoverState(false, get_unique_id())
+
+func bring_to_front() -> void:
+	var target: Node = self
+	# If this FoodArea is attached to a parent node (e.g., CharacterBody2D or Node2D food object), raise the parent instead
+	if get_parent() and not (get_parent() is Viewport):
+		target = get_parent()
+		
+	var parent = target.get_parent()
+	if parent:
+		parent.move_child(target, -1)
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
@@ -67,14 +57,15 @@ func _input(event: InputEvent) -> void:
 			dragging_instance = get_instance_id()
 			dragging = true
 			selected = true
+			bring_to_front()
 			offset = global_position - event.global_position
 			previous_mouse_pos = get_global_mouse_position()
 			drag_velocity = Vector2.ZERO
 			vertical_velocity = 0.0
 			horizontal_velocity = 0.0
 			
-			if is_instance_valid(desktop_pet_node) and desktop_pet_node.has_method("ReportHoverState"):
-				desktop_pet_node.ReportHoverState(true, get_unique_id())
+			if is_instance_valid(DesktopPet) and DesktopPet.has_method("ReportHoverState"):
+				DesktopPet.ReportHoverState(true, get_unique_id())
 			is_currently_hovered = true
 			
 		elif not event.pressed and dragging:
@@ -86,8 +77,8 @@ func _input(event: InputEvent) -> void:
 			vertical_velocity = drag_velocity.y * throw_multiplier
 			is_currently_hovered = false
 			
-			if is_instance_valid(desktop_pet_node) and desktop_pet_node.has_method("ReportHoverState"):
-				desktop_pet_node.ReportHoverState(false, get_unique_id())
+			if is_instance_valid(DesktopPet) and DesktopPet.has_method("ReportHoverState"):
+				DesktopPet.ReportHoverState(false, get_unique_id())
 
 func _process(delta: float) -> void:
 	hover_debounce_timer -= delta
@@ -111,8 +102,8 @@ func update_hover_status() -> void:
 	
 	if mouse_over != is_currently_hovered and hover_debounce_timer <= 0:
 		is_currently_hovered = mouse_over
-		if is_instance_valid(desktop_pet_node) and desktop_pet_node.has_method("ReportHoverState"):
-			desktop_pet_node.ReportHoverState(is_currently_hovered, get_unique_id())
+		if is_instance_valid(DesktopPet) and DesktopPet.has_method("ReportHoverState"):
+			DesktopPet.ReportHoverState(is_currently_hovered, get_unique_id())
 		hover_debounce_timer = HOVER_DEBOUNCE_DELAY
 
 func process_dragging(delta: float) -> void:
@@ -159,13 +150,12 @@ func apply_gravity(delta: float) -> void:
 		vertical_velocity = abs(vertical_velocity) * bounce_strength
 
 func calculate_floor_y(food_pos: Vector2, win_pos: Vector2i) -> float:
-	_ensure_desktop_pet_node()
-	if is_instance_valid(desktop_pet_node) and desktop_pet_node.has_method("GetFloorPositionForScreen"):
+	if is_instance_valid(DesktopPet) and DesktopPet.has_method("GetFloorPositionForScreen"):
 		for i in range(DisplayServer.get_screen_count()):
 			var s_pos = DisplayServer.screen_get_position(i)
 			var s_size = DisplayServer.screen_get_size(i)
 			if Rect2(s_pos, s_size).has_point(food_pos):
-				var global_floor_y = desktop_pet_node.GetFloorPositionForScreen(i)
+				var global_floor_y = DesktopPet.GetFloorPositionForScreen(i)
 				return global_floor_y - win_pos.y - floor_offset
 	return DisplayServer.window_get_size().y - 48 - floor_offset
 

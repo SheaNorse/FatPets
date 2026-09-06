@@ -1,6 +1,6 @@
+class_name Pet
 extends CharacterBody2D
 
-@export var desktop_pet_node: Node
 @export var gravity_strength := 1000.0
 @export var floor_offset := 90.0
 @export var rotation_speed := 0.01
@@ -29,7 +29,10 @@ extends CharacterBody2D
 var wander_timer := 0.0
 var is_wandering := false
 var wander_direction := 1.0 
-var is_relaxed := false  # Tracks relaxed state
+
+# --- STATE TRACKING ---
+enum State { NORMAL, RELAXED, SITTING, SLEEPING }
+var current_state: State = State.NORMAL
 
 @onready var SFX = $AudioStreamPlayer
 
@@ -43,8 +46,8 @@ var previous_mouse_pos := Vector2.ZERO
 var vertical_velocity := 0.0
 var horizontal_velocity := 0.0
 var drag_velocity := Vector2.ZERO
-var pet_timer := 0.0         
-const PET_DURATION := 0.5    
+var pet_timer := 0.0          
+const PET_DURATION := 0.5     
 static var dragging_instance: int = -1  # stores instance ID of who owns the drag
 
 # --- PER-INSTANCE HOVER STATE ---
@@ -56,6 +59,8 @@ const HOVER_DEBOUNCE_DELAY := 0.15
 var eyes_base_x := 0.0
 var mouth_base_x := 0.0
 var petting_area_base_x := 0.0
+var sleeping_particles_base_x := 0.0
+var eyes_default_position := Vector2.ZERO
 
 # --- MENU VARIABLES ---
 @onready var body_area = $Area2D
@@ -64,9 +69,12 @@ var petting_area_base_x := 0.0
 @onready var state_menu = $ContextMenu/StateMenu
 @onready var body = $Body
 @onready var eyes = $Body/Eyes
-@onready var mouth = $Body/Mouth
+@onready var mouth = $Body/Eyes/Mouth
 @onready var particles = $Petting/PettingHitbox/GPUParticles2D
 @onready var petting_area = $Petting/PettingHitbox
+
+@onready var sleeping_particles = $Sleeping
+@onready var sitting_anchor = $EyeAnchors/Sitting
 
 var is_menu_open := false
 var state_enabled := false
@@ -74,6 +82,13 @@ var state_enabled := false
 func _ready() -> void:
 	input_pickable = true
 	randomize() 
+	
+	if eyes:
+		eyes_default_position = eyes.position
+		
+	if sleeping_particles:
+		sleeping_particles_base_x = sleeping_particles.position.x
+		sleeping_particles.emitting = false
 	
 	var window_size = DisplayServer.window_get_size()
 	global_position = Vector2(window_size.x / 2.0, 50.0)
@@ -88,12 +103,12 @@ func _ready() -> void:
 	connect_menu_buttons()
 	_setup_edible_status()
 	
-	var screen_count = desktop_pet_node.GetScreenCount()
-	print("Pet initialized. Available screens: ", screen_count)
+	if is_instance_valid(DesktopPet):
+		var screen_count = DesktopPet.GetScreenCount()
+		print("Pet initialized. Available screens: ", screen_count)
 
 func _setup_edible_status() -> void:
 	if is_edible and body_area:
-		# Check if body_area is already a FoodArea or attach a FoodArea marker to it
 		if not body_area is FoodArea and not body_area.has_node("FoodAreaMarker"):
 			var food_marker = FoodArea.new()
 			food_marker.name = "FoodAreaMarker"
@@ -118,16 +133,17 @@ func _resolve_flip_offsets() -> void:
 		petting_area_base_x = petting_area.position.x
 
 func _enter_tree() -> void:
-	desktop_pet_node.RegisterPet()
+	if is_instance_valid(DesktopPet):
+		DesktopPet.RegisterPet()
 
 func _exit_tree() -> void:
 	if dragging_instance == get_instance_id():
 		dragging_instance = -1
 		
-	if desktop_pet_node:
-		desktop_pet_node.ReportHoverState(false, get_unique_id())
-		desktop_pet_node.ReportHoverState(false, get_menu_id())
-		desktop_pet_node.UnregisterPet(get_tree())
+	if is_instance_valid(DesktopPet):
+		DesktopPet.ReportHoverState(false, get_unique_id())
+		DesktopPet.ReportHoverState(false, get_menu_id())
+		DesktopPet.UnregisterPet(get_tree())
 
 func get_unique_id() -> String:
 	return str(get_instance_id())
@@ -144,8 +160,9 @@ func get_all_children(node: Node) -> Array:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
-		desktop_pet_node.ReportHoverState(false, get_unique_id())
-		desktop_pet_node.ReportHoverState(false, get_menu_id())
+		if is_instance_valid(DesktopPet):
+			DesktopPet.ReportHoverState(false, get_unique_id())
+			DesktopPet.ReportHoverState(false, get_menu_id())
 
 func bring_to_front() -> void:
 	var parent = get_parent()
@@ -171,6 +188,7 @@ func _input(event: InputEvent) -> void:
 				dragging_instance = get_instance_id()
 				dragging = true
 				bring_to_front()
+				set_state(State.NORMAL) # Reset action state when grabbed
 				is_wandering = false
 				toggle_menu(false)
 				offset = global_position - event.global_position
@@ -179,7 +197,8 @@ func _input(event: InputEvent) -> void:
 				vertical_velocity = 0.0
 				horizontal_velocity = 0.0
 				interaction_cooldown = INTERACTION_COOLDOWN_TIME
-				desktop_pet_node.ReportHoverState(true, get_unique_id())
+				if is_instance_valid(DesktopPet):
+					DesktopPet.ReportHoverState(true, get_unique_id())
 				is_currently_hovered = true
 
 		elif not event.pressed and dragging:
@@ -187,14 +206,14 @@ func _input(event: InputEvent) -> void:
 				dragging_instance = -1
 			dragging = false
 			
-			# RELEASE CHECK: Trigger eating ON RELEASE only
 			_check_eat_on_release()
 
 			horizontal_velocity = drag_velocity.x * throw_multiplier
 			vertical_velocity = drag_velocity.y * throw_multiplier
 			interaction_cooldown = INTERACTION_COOLDOWN_TIME
 			is_currently_hovered = false
-			desktop_pet_node.ReportHoverState(false, get_unique_id())
+			if is_instance_valid(DesktopPet):
+				DesktopPet.ReportHoverState(false, get_unique_id())
 
 	if event is InputEventKey and event.pressed:
 		if event.keycode == KEY_1: switch_to_screen(0)
@@ -221,11 +240,34 @@ func _process(delta: float) -> void:
 	if not dragging:
 		apply_physics_and_wander(delta)
 	
-	# Regular non-pet food items can still be eaten normally in process
 	var overlapping = body_area.get_overlapping_areas()
 	for area in overlapping:
 		if not (area.get_parent() is CharacterBody2D):
 			_check_and_eat_area(area)
+
+func set_state(new_state: State) -> void:
+	current_state = new_state
+	
+	if current_state != State.NORMAL:
+		is_wandering = false
+		horizontal_velocity = 0.0
+
+	# Handle Sleeping Particle Emission
+	if sleeping_particles:
+		sleeping_particles.emitting = (current_state == State.SLEEPING)
+
+	# Align eyes with sitting anchor or revert to default position
+	if eyes:
+		if current_state == State.SITTING and sitting_anchor:
+			var target_x = sitting_anchor.position.x
+			if body.flip_h:
+				target_x = -target_x
+			eyes.position = Vector2(target_x, sitting_anchor.position.y)
+		else:
+			var target_x = eyes_base_x
+			if body.flip_h:
+				target_x = -eyes_base_x
+			eyes.position = Vector2(target_x, eyes_default_position.y)
 
 func _check_eat_on_release() -> void:
 	var overlapping = body_area.get_overlapping_areas()
@@ -240,7 +282,6 @@ func _check_eat_on_release() -> void:
 				if target_node.get("is_menu_open") == true:
 					continue
 
-				# Stationary ground pet gets priority to eat this released pet
 				var target_is_dragged = target_node.get("dragging") == true
 				
 				if not target_is_dragged:
@@ -265,7 +306,6 @@ func _check_and_eat_area(area: Area2D) -> void:
 
 		var target_node = area.get_parent()
 		
-		# Non-pet food items
 		if not (target_node is CharacterBody2D):
 			SFX.play()
 			area.queue_free()
@@ -286,12 +326,13 @@ func toggle_menu(open: bool) -> void:
 		if state_menu:
 			state_menu.visible = false
 
-	if is_menu_open:
-		desktop_pet_node.ReportHoverState(true, get_menu_id())
-	else:
-		desktop_pet_node.ReportHoverState(false, get_menu_id())
-		is_currently_hovered = is_mouse_over(1)
-		desktop_pet_node.ReportHoverState(is_currently_hovered, get_unique_id())
+	if is_instance_valid(DesktopPet):
+		if is_menu_open:
+			DesktopPet.ReportHoverState(true, get_menu_id())
+		else:
+			DesktopPet.ReportHoverState(false, get_menu_id())
+			is_currently_hovered = is_mouse_over(1)
+			DesktopPet.ReportHoverState(is_currently_hovered, get_unique_id())
 
 func update_hover_status() -> void:
 	if dragging or is_menu_open:
@@ -304,7 +345,8 @@ func update_hover_status() -> void:
 	if should_be_solid != is_currently_hovered:
 		if hover_debounce_timer <= 0:
 			is_currently_hovered = should_be_solid
-			desktop_pet_node.ReportHoverState(is_currently_hovered, get_unique_id())
+			if is_instance_valid(DesktopPet):
+				DesktopPet.ReportHoverState(is_currently_hovered, get_unique_id())
 			hover_debounce_timer = HOVER_DEBOUNCE_DELAY
 
 func is_mouse_over_menu() -> bool:
@@ -352,32 +394,42 @@ func apply_physics_and_wander(delta: float) -> void:
 	var grounded = global_position.y >= floor_y - 1.0
 
 	if grounded:
-		if not is_relaxed and not is_wandering and randf() < wander_chance and interaction_cooldown <= 0:
-			start_wandering()
-		
-		if is_wandering:
-			body.play("Walking")
+		if current_state == State.SLEEPING:
+			body.play("Sleeping")
 			eyes.visible = false
 			mouth.visible = false
-			wander_timer -= delta
-			
-			var target_speed = wander_direction * walk_speed
-			horizontal_velocity = move_toward(horizontal_velocity, target_speed, walk_acceleration * delta)
-			
-			if wander_timer <= 0:
-				is_wandering = false
+		elif current_state == State.SITTING:
+			body.play("Sitting")
+			eyes.visible = true
+			mouth.visible = true
+			eyes.play("Blinking")
 		else:
-			horizontal_velocity = move_toward(horizontal_velocity, 0.0, walk_friction * delta)
+			if current_state != State.RELAXED and not is_wandering and randf() < wander_chance and interaction_cooldown <= 0:
+				start_wandering()
 			
-			if abs(horizontal_velocity) < 10.0:
-				body.play("Breathing")
-				eyes.visible = true
-				mouth.visible = true
-				eyes.play("Blinking")
-			else:
+			if is_wandering:
 				body.play("Walking")
 				eyes.visible = false
 				mouth.visible = false
+				wander_timer -= delta
+				
+				var target_speed = wander_direction * walk_speed
+				horizontal_velocity = move_toward(horizontal_velocity, target_speed, walk_acceleration * delta)
+				
+				if wander_timer <= 0:
+					is_wandering = false
+			else:
+				horizontal_velocity = move_toward(horizontal_velocity, 0.0, walk_friction * delta)
+				
+				if abs(horizontal_velocity) < 10.0:
+					body.play("Breathing")
+					eyes.visible = true
+					mouth.visible = true
+					eyes.play("Blinking")
+				else:
+					body.play("Walking")
+					eyes.visible = false
+					mouth.visible = false
 	else:
 		is_wandering = false
 		horizontal_velocity *= 0.98
@@ -409,27 +461,44 @@ func start_wandering() -> void:
 	is_wandering = true
 	wander_timer = randf_range(1.5, 4.0)
 	wander_direction = 1.0 if randf() > 0.5 else -1.0
+	
+	var is_flipped = (wander_direction > 0)
+	if invert_facing_direction:
+		is_flipped = !is_flipped
+		
+	_apply_facing_flip(is_flipped)
+
+func _apply_facing_flip(is_flipped: bool) -> void:
 	if body:
-		var is_flipped = (wander_direction > 0)
-		if invert_facing_direction:
-			is_flipped = !is_flipped
 		body.flip_h = is_flipped
-		if eyes:
-			eyes.flip_h = is_flipped
+	if eyes:
+		eyes.flip_h = is_flipped
+		if current_state == State.SITTING and sitting_anchor:
+			eyes.position.x = -sitting_anchor.position.x if is_flipped else sitting_anchor.position.x
+		else:
 			eyes.position.x = -eyes_base_x if is_flipped else eyes_base_x
-		if mouth:
-			mouth.flip_h = is_flipped
-			mouth.position.x = -mouth_base_x if is_flipped else mouth_base_x
-		if petting_area:
-			petting_area.position.x = -petting_area_base_x if is_flipped else petting_area_base_x
+	if mouth:
+		mouth.flip_h = is_flipped
+		mouth.position.x = -mouth_base_x if is_flipped else mouth_base_x
+	if petting_area:
+		petting_area.position.x = -petting_area_base_x if is_flipped else petting_area_base_x
+		
+	# Flip particle position and direction safely for CPUParticles2D
+	if sleeping_particles:
+		sleeping_particles.position.x = -sleeping_particles_base_x if is_flipped else sleeping_particles_base_x
+		
+		# Invert the horizontal direction directly on CPUParticles2D
+		var base_dir = abs(sleeping_particles.direction.x) if sleeping_particles.direction.x != 0 else 1.0
+		sleeping_particles.direction.x = -base_dir if is_flipped else base_dir
 
 func calculate_floor_y(pet_pos: Vector2, win_pos: Vector2i) -> float:
-	for i in range(DisplayServer.get_screen_count()):
-		var s_pos = DisplayServer.screen_get_position(i)
-		var s_size = DisplayServer.screen_get_size(i)
-		if Rect2(s_pos, s_size).has_point(pet_pos):
-			var global_floor_y = desktop_pet_node.GetFloorPositionForScreen(i)
-			return global_floor_y - win_pos.y - floor_offset
+	if is_instance_valid(DesktopPet):
+		for i in range(DisplayServer.get_screen_count()):
+			var s_pos = DisplayServer.screen_get_position(i)
+			var s_size = DisplayServer.screen_get_size(i)
+			if Rect2(s_pos, s_size).has_point(pet_pos):
+				var global_floor_y = DesktopPet.GetFloorPositionForScreen(i)
+				return global_floor_y - win_pos.y - floor_offset
 	return DisplayServer.window_get_size().y - 48 - floor_offset
 
 func handle_side_bounces() -> void:
@@ -469,10 +538,8 @@ func is_mouse_over(mask: int = 1) -> bool:
 	return false
 
 func switch_to_screen(screen_index: int) -> void:
-	if not desktop_pet_node:
-		return
-		
-	desktop_pet_node.SwitchToScreen(screen_index, self)
+	if is_instance_valid(DesktopPet):
+		DesktopPet.SwitchToScreen(screen_index, self)
 
 ## CONTEXT MENU & SUBMENU CONNECTORS
 
@@ -513,21 +580,22 @@ func _on_delete_pressed() -> void:
 
 func _on_sleep_pressed() -> void:
 	toggle_menu(false)
+	set_state(State.SLEEPING)
 
 func _on_sit_pressed() -> void:
 	toggle_menu(false)
+	set_state(State.SITTING)
 
 func _on_relax_pressed() -> void:
 	toggle_menu(false)
-	is_relaxed = !is_relaxed
-	
-	if is_relaxed:
-		is_wandering = false
-		horizontal_velocity = 0.0
+	set_state(State.RELAXED)
 
 func _on_reset_pressed() -> void:
 	toggle_menu(false)
-	is_relaxed = false
+	is_wandering = false
+	interaction_cooldown = 0.0 # Reset cooldown so wander can start right away
+	set_state(State.NORMAL)
+	start_wandering()
 
 func _on_area_2d_area_entered(area):
 	if (area is FoodArea or area.has_node("FoodAreaMarker")) and area != body_area and area.get_parent() != self:

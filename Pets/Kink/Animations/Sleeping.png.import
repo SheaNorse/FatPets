@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://orcfiq8yu1jq"
-path="res://.godot/imported/yummyball.png-e96fcca6a6ca270ce314999f19124829.ctex"
+uid="uid://de3cmxp1bigge"
+path="res://.godot/imported/Sleeping.png-d6b56fe8ca34835145b2f9343f54d787.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://yummyball.png"
-dest_files=["res://.godot/imported/yummyball.png-e96fcca6a6ca270ce314999f19124829.ctex"]
+source_file="res://Pets/Kink/Animations/Sleeping.png"
+dest_files=["res://.godot/imported/Sleeping.png-d6b56fe8ca34835145b2f9343f54d787.ctex"]
 
 [params]
 

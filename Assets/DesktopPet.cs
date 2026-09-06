@@ -5,6 +5,9 @@ using System.Collections.Generic;
 
 public partial class DesktopPet : Node
 {
+	// --- Singleton Instance ---
+	public static DesktopPet Instance { get; private set; }
+
 	// --- Static Tracking Counters ---
 	private static int _petCount = 0;
 	private static int _foodCount = 0;
@@ -15,7 +18,7 @@ public partial class DesktopPet : Node
 		GD.Print($"Pet added. Total pets: {_petCount}");
 	}
 
-	public static void UnregisterPet(SceneTree tree)
+	public static void UnregisterPet(SceneTree tree = null)
 	{
 		_petCount--;
 		GD.Print($"Pet removed. Total pets: {_petCount}");
@@ -28,7 +31,7 @@ public partial class DesktopPet : Node
 		GD.Print($"Food added. Total food: {_foodCount}");
 	}
 
-	public static void UnregisterFood(SceneTree tree)
+	public static void UnregisterFood(SceneTree tree = null)
 	{
 		_foodCount--;
 		GD.Print($"Food removed. Total food: {_foodCount}");
@@ -40,7 +43,14 @@ public partial class DesktopPet : Node
 		if (_petCount <= 0 && _foodCount <= 0)
 		{
 			GD.Print("No pets or food remaining! Automatically exiting application...");
-			tree.Quit();
+			if (tree != null)
+			{
+				tree.Quit();
+			}
+			else if (Instance != null && Instance.GetTree() != null)
+			{
+				Instance.GetTree().Quit();
+			}
 		}
 	}
 
@@ -77,10 +87,10 @@ public partial class DesktopPet : Node
 	const uint SWP_NOSIZE = 0x0001;
 	const uint SWP_NOMOVE = 0x0002;
 	const uint SWP_NOZORDER = 0x0004;
-	const uint SWP_NOREDRAW = 0x0008;      // Prevents redrawing default frame background
+	const uint SWP_NOREDRAW = 0x0008;
 	const uint SWP_NOACTIVATE = 0x0010;
 	const uint SWP_FRAMECHANGED = 0x0020;
-	const uint SWP_DEFERERASE = 0x2000;     // Prevents WM_ERASEBKGND white flash
+	const uint SWP_DEFERERASE = 0x2000;
 
 	const uint MONITOR_DEFAULTTONEAREST = 2;
 
@@ -145,11 +155,22 @@ public partial class DesktopPet : Node
 	[Export] public Tween.TransitionType ScreenEnterFadeTransition = Tween.TransitionType.Sine;
 	[Export] public Tween.EaseType ScreenEnterFadeEase = Tween.EaseType.Out;
 
+	public override void _EnterTree()
+	{
+		if (Instance == null)
+		{
+			Instance = this;
+		}
+		else if (Instance != this)
+		{
+			QueueFree();
+		}
+	}
+
 	public override async void _Ready()
 	{
 		_hwnd = (IntPtr)DisplayServer.WindowGetNativeHandle(DisplayServer.HandleType.WindowHandle);
 
-		// 1. Hide actual OS window handle before DWM composition links
 		if (_isWindows && _hwnd != IntPtr.Zero)
 		{
 			ShowWindow(_hwnd, SW_HIDE);
@@ -160,16 +181,13 @@ public partial class DesktopPet : Node
 		GetTree().Root.TransparentBg = true;
 		DisplayServer.WindowSetFlag(DisplayServer.WindowFlags.AlwaysOnTop, true);
 
-		// Pre-hide all pet sprites instantly so they are 100% transparent before window reveals
-		HideAllPetsInitially();
-
-		// 2. Yield two frames for Godot frame buffers and DWM transparent surface sync
 		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
 		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
 
 		if (!GodotObject.IsInstanceValid(this)) return;
 
-		// 3. Unhide HWND without stealing window focus
+		HideAllElementsInitially();
+
 		if (_isWindows && _hwnd != IntPtr.Zero)
 		{
 			ShowWindow(_hwnd, SW_SHOWNOACTIVATE);
@@ -177,12 +195,10 @@ public partial class DesktopPet : Node
 
 		RefreshTaskbarWindows();
 
-		// 4. Force immediate click-through + frame update on startup so Windows registers hit-testing
 		SetClickThrough(true, forceFrameRefresh: true);
 		ForceTopMost();
 
-		// 5. Place pets and launch the smooth alpha fade-in tween
-		RandomizeInitialPetPositions();
+		RandomizeInitialElementPositions();
 	}
 
 	public override void _Process(double delta)
@@ -206,15 +222,12 @@ public partial class DesktopPet : Node
 	{
 		if (!_isWindows || _hwnd == IntPtr.Zero) return;
 
-		// Force dark titlebar/frame context to avoid white background flushes
 		int useDarkMode = 1;
 		DwmSetWindowAttribute(_hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref useDarkMode, sizeof(int));
 
-		// Disable rounded corner flash artifacts
-		int cornerPreference = 1; // DWMSW_DONOTROUND
+		int cornerPreference = 1;
 		DwmSetWindowAttribute(_hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, ref cornerPreference, sizeof(int));
 
-		// Force DWM frame extension to map transparency across full HWND canvas
 		MARGINS margins = new MARGINS { cxLeftWidth = -1, cxRightWidth = -1, cyTopHeight = -1, cyBottomHeight = -1 };
 		DwmExtendFrameIntoClientArea(_hwnd, ref margins);
 	}
@@ -384,9 +397,9 @@ public partial class DesktopPet : Node
 			SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW | SWP_DEFERERASE);
 	}
 
-	public void RandomizePetPosition(Node2D petNode, int screenIndex = -1)
+	public void RandomizePosition(Node2D targetNode, int screenIndex = -1)
 	{
-		if (!GodotObject.IsInstanceValid(petNode)) return;
+		if (!GodotObject.IsInstanceValid(targetNode)) return;
 
 		if (screenIndex < 0)
 			screenIndex = DisplayServer.WindowGetCurrentScreen();
@@ -407,82 +420,100 @@ public partial class DesktopPet : Node
 		float randomX = (float)GD.RandRange(minX, maxX);
 		float randomY = (float)GD.RandRange(minY, maxY);
 
-		petNode.GlobalPosition = new Vector2(randomX, randomY);
+		targetNode.GlobalPosition = new Vector2(randomX, randomY);
 
-		// Reset movement velocities if properties exist
-		petNode.Set("vertical_velocity", 0.0f);
-		petNode.Set("horizontal_velocity", 0.0f);
+		targetNode.Set("vertical_velocity", 0.0f);
+		targetNode.Set("horizontal_velocity", 0.0f);
 
-		PlayScreenEnterFade(petNode);
+		PlayScreenEnterFade(targetNode);
 	}
 
-	private void PlayScreenEnterFade(Node2D petNode)
+	public void RandomizePetPosition(Node2D petNode, int screenIndex = -1) => RandomizePosition(petNode, screenIndex);
+
+	private void PlayScreenEnterFade(Node2D node)
 	{
-		if (!GodotObject.IsInstanceValid(petNode)) return;
+		if (!GodotObject.IsInstanceValid(node)) return;
 
-		// Force starting alpha to zero before starting the fade tween
-		Color startColor = petNode.Modulate;
+		Color startColor = node.Modulate;
 		startColor.A = 0.0f;
-		petNode.Modulate = startColor;
+		node.Modulate = startColor;
 
-		Tween tween = petNode.CreateTween();
-		tween.TweenProperty(petNode, "modulate:a", 1.0f, ScreenEnterFadeDurationSeconds)
+		Tween tween = node.CreateTween();
+		tween.TweenProperty(node, "modulate:a", 1.0f, ScreenEnterFadeDurationSeconds)
 			.SetTrans(ScreenEnterFadeTransition)
 			.SetEase(ScreenEnterFadeEase);
 	}
 
-	/// <summary>
-	/// Immediately sets alpha of all detected pets to 0 prior to rendering window
-	/// </summary>
-	private void HideAllPetsInitially()
+	private void HideAllElementsInitially()
 	{
-		List<Node2D> pets = new List<Node2D>();
-		FindPetsRecursive(GetTree().Root, pets);
+		List<Node2D> elements = new List<Node2D>();
+		FindInteractablesRecursive(GetTree().Root, elements);
 
-		foreach (Node2D petNode in pets)
+		foreach (Node2D node in elements)
 		{
-			Color hidden = petNode.Modulate;
+			Color hidden = node.Modulate;
 			hidden.A = 0.0f;
-			petNode.Modulate = hidden;
+			node.Modulate = hidden;
 		}
 	}
 
-	private void RandomizeInitialPetPositions()
+	private void RandomizeInitialElementPositions()
 	{
 		int currentScreen = DisplayServer.WindowGetCurrentScreen();
-		List<Node2D> pets = new List<Node2D>();
+		List<Node2D> elements = new List<Node2D>();
 
-		FindPetsRecursive(GetTree().Root, pets);
+		FindInteractablesRecursive(GetTree().Root, elements);
 
-		foreach (Node2D petNode in pets)
+		foreach (Node2D node in elements)
 		{
-			RandomizePetPosition(petNode, currentScreen);
+			RandomizePosition(node, currentScreen);
 		}
 	}
 
-	private void FindPetsRecursive(Node parent, List<Node2D> petList)
+	private void FindInteractablesRecursive(Node parent, List<Node2D> list)
 	{
 		foreach (Node child in parent.GetChildren())
 		{
-			if (child != this && child is Node2D node2D && (child.IsInGroup("Pets") || child is CharacterBody2D))
+			if (child != this && child is Node2D node2D)
 			{
-				petList.Add(node2D);
+				bool isPet = child is CharacterBody2D;
+				bool isFood = IsFoodAreaNode(child);
+
+				if (isPet || isFood)
+				{
+					list.Add(node2D);
+				}
 			}
 
-			FindPetsRecursive(child, petList);
+			FindInteractablesRecursive(child, list);
 		}
 	}
 
-	public async void SwitchToScreen(int screenIndex, Node2D petNode = null)
+	private bool IsFoodAreaNode(Node node)
+	{
+		if (node.GetType().Name.Equals("FoodArea", StringComparison.OrdinalIgnoreCase))
+			return true;
+
+		if (node.GetClass() == "FoodArea")
+			return true;
+
+		var script = node.GetScript().As<Script>();
+		if (script != null && script.GetGlobalName() == "FoodArea")
+			return true;
+
+		return false;
+	}
+
+	public async void SwitchToScreen(int screenIndex, Node2D targetNode = null)
 	{
 		int screenCount = DisplayServer.GetScreenCount();
 		if (screenIndex < 0 || screenIndex >= screenCount) return;
 
-		if (GodotObject.IsInstanceValid(petNode))
+		if (GodotObject.IsInstanceValid(targetNode))
 		{
-			Color hiddenColor = petNode.Modulate;
+			Color hiddenColor = targetNode.Modulate;
 			hiddenColor.A = 0.0f;
-			petNode.Modulate = hiddenColor;
+			targetNode.Modulate = hiddenColor;
 		}
 
 		if (_isWindows && _hwnd != IntPtr.Zero)
@@ -528,14 +559,14 @@ public partial class DesktopPet : Node
 
 		RefreshTaskbarWindows();
 
-		if (GodotObject.IsInstanceValid(petNode))
+		if (GodotObject.IsInstanceValid(targetNode))
 		{
 			float randomDelay = (float)GD.RandRange(0.001, 0.3);
 			await ToSignal(GetTree().CreateTimer(randomDelay), SceneTreeTimer.SignalName.Timeout);
 
-			if (GodotObject.IsInstanceValid(this) && GodotObject.IsInstanceValid(petNode))
+			if (GodotObject.IsInstanceValid(this) && GodotObject.IsInstanceValid(targetNode))
 			{
-				RandomizePetPosition(petNode, screenIndex);
+				RandomizePosition(targetNode, screenIndex);
 			}
 		}
 	}

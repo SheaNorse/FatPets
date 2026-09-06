@@ -17,6 +17,10 @@ boot_splash/bg_color=Color(0.14117648, 0.14117648, 0.14117648, 0)
 boot_splash/show_image=false
 config/icon="res://icon.svg"
 
+[autoload]
+
+DesktopPet="*uid://co04yugpp7caa"
+
 [display]
 
 window/size/viewport_width=720
