@@ -2,16 +2,20 @@
 
 [ext_resource type="Texture2D" uid="uid://cylw4oy8onaa7" path="res://ButtonFluids.png" id="1_6o53x"]
 [ext_resource type="Script" uid="uid://slfculps2t8f" path="res://Pets/Starboy/AddMenu.gd" id="1_a22qd"]
-[ext_resource type="Resource" uid="uid://o2hlqp8vmv2n" path="res://Kink.tres" id="3_kdh73"]
+[ext_resource type="Texture2D" uid="uid://bkkd23k2s4fvf" path="res://Kink.png" id="3_ljyou"]
 [ext_resource type="Script" uid="uid://dp28gfjbpj0dx" path="res://Assets/PetSlot.gd" id="3_rdm5l"]
 [ext_resource type="FontFile" uid="uid://07khjg747i3i" path="res://Assets/aseprite.otf" id="3_ve3jb"]
 [ext_resource type="Script" uid="uid://cb1ueqyvhqggp" path="res://Pets/Starboy/FloorControl.gd" id="4_4d77o"]
 [ext_resource type="Script" uid="uid://dnuhh8s4ugx38" path="res://Pets/Starboy/FolderTrigger.gd" id="4_bhp15"]
 [ext_resource type="Script" uid="uid://bltehiklw1m1k" path="res://Pets/Starboy/FolderContents.gd" id="4_r3kdq"]
 [ext_resource type="Texture2D" uid="uid://ber6747qeua5q" path="res://Erase.png" id="4_rdm5l"]
-[ext_resource type="Texture2D" uid="uid://01svy7pvm3xc" path="res://Pout.png" id="5_4d77o"]
 [ext_resource type="Script" uid="uid://do0nq0448xsjq" path="res://Pets/Starboy/DeletePet.gd" id="7_kdh73"]
+[ext_resource type="PackedScene" uid="uid://6h1o4uvweqfv" path="res://Pets/Kink/Kink.tscn" id="8_bhp15"]
 [ext_resource type="Script" uid="uid://csr6ogc4xy8gk" path="res://DeleteComfirmation.gd" id="9_5w56s"]
+[ext_resource type="Texture2D" uid="uid://i7u5kiwfv2iw" path="res://Pets/Starboy/Screenshot 2026-10-14 155934.png" id="9_pjya6"]
+[ext_resource type="PackedScene" uid="uid://byop432rxb1yp" path="res://Pets/Starboy/Starboy.tscn" id="10_pjya6"]
+[ext_resource type="Texture2D" uid="uid://b1ud6wgf1eooc" path="res://Food/Cake.png" id="11_1ikeo"]
+[ext_resource type="PackedScene" uid="uid://llreg4fc5c7c" path="res://Food/Cake.tscn" id="12_1ikeo"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_7hwmc"]
 content_margin_left = 4.0
@@ -2029,7 +2033,7 @@ layout_mode = 0
 offset_right = 80.0
 offset_bottom = 80.0
 mouse_filter = 2
-texture = ExtResource("5_4d77o")
+texture = ExtResource("3_ljyou")
 expand_mode = 1
 
 [node name="Gradient" type="TextureRect" parent="Contents/ScrollContainer/Pets/Kink" unique_id=1366066175]
@@ -2051,7 +2055,7 @@ offset_top = -11.889999
 offset_right = 72.5
 grow_vertical = 0
 theme = SubResource("Theme_kb5ln")
-text = "Kink"
+text = "Aqua"
 label_settings = SubResource("LabelSettings_vox05")
 
 [node name="AddButton" type="Button" parent="Contents/ScrollContainer/Pets/Kink" unique_id=1555843880]
@@ -2063,7 +2067,7 @@ grow_horizontal = 2
 grow_vertical = 2
 flat = true
 script = ExtResource("3_rdm5l")
-pet_data = ExtResource("3_kdh73")
+pet_scene = ExtResource("8_bhp15")
 
 [node name="DeleteFrame" type="NinePatchRect" parent="Contents/ScrollContainer/Pets/Kink" unique_id=1395262495]
 texture_filter = 1
@@ -2099,6 +2103,200 @@ script = ExtResource("7_kdh73")
 target_to_delete = NodePath("../..")
 
 [node name="Icon" type="TextureRect" parent="Contents/ScrollContainer/Pets/Kink/DeleteFrame" unique_id=632724630]
+modulate = Color(1, 0, 0, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("4_rdm5l")
+
+[node name="Kink2" type="NinePatchRect" parent="Contents/ScrollContainer/Pets" unique_id=2040063245]
+texture_filter = 1
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+texture = ExtResource("1_6o53x")
+region_rect = Rect2(0, 0, 46, 19)
+patch_margin_left = 4
+patch_margin_top = 4
+patch_margin_right = 4
+patch_margin_bottom = 4
+
+[node name="Icon" type="TextureRect" parent="Contents/ScrollContainer/Pets/Kink2" unique_id=1474094723]
+layout_mode = 0
+offset_left = 1.5
+offset_top = 1.0
+offset_right = 78.0
+offset_bottom = 79.0
+mouse_filter = 2
+texture = ExtResource("9_pjya6")
+expand_mode = 1
+
+[node name="Gradient" type="TextureRect" parent="Contents/ScrollContainer/Pets/Kink2" unique_id=712386445]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+texture = SubResource("GradientTexture2D_jildg")
+
+[node name="Name" type="Label" parent="Contents/ScrollContainer/Pets/Kink2" unique_id=1384989408]
+z_index = 1
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = -11.889999
+offset_right = 72.5
+grow_vertical = 0
+theme = SubResource("Theme_kb5ln")
+text = "Starboy"
+label_settings = SubResource("LabelSettings_vox05")
+
+[node name="AddButton" type="Button" parent="Contents/ScrollContainer/Pets/Kink2" unique_id=1110554285]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+flat = true
+script = ExtResource("3_rdm5l")
+pet_scene = ExtResource("10_pjya6")
+
+[node name="DeleteFrame" type="NinePatchRect" parent="Contents/ScrollContainer/Pets/Kink2" unique_id=1080211772]
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 62.0
+offset_top = 62.0
+offset_right = -3.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_6o53x")
+region_rect = Rect2(0, 0, 46, 19)
+patch_margin_left = 4
+patch_margin_top = 4
+patch_margin_right = 4
+patch_margin_bottom = 4
+
+[node name="DeleteButton" type="Button" parent="Contents/ScrollContainer/Pets/Kink2/DeleteFrame" unique_id=1543851854 node_paths=PackedStringArray("target_to_delete")]
+z_index = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 0.5
+offset_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+flat = true
+script = ExtResource("7_kdh73")
+target_to_delete = NodePath("../..")
+
+[node name="Icon" type="TextureRect" parent="Contents/ScrollContainer/Pets/Kink2/DeleteFrame" unique_id=815523908]
+modulate = Color(1, 0, 0, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("4_rdm5l")
+
+[node name="Kink3" type="NinePatchRect" parent="Contents/ScrollContainer/Pets" unique_id=627214406]
+texture_filter = 1
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+texture = ExtResource("1_6o53x")
+region_rect = Rect2(0, 0, 46, 19)
+patch_margin_left = 4
+patch_margin_top = 4
+patch_margin_right = 4
+patch_margin_bottom = 4
+
+[node name="Icon" type="TextureRect" parent="Contents/ScrollContainer/Pets/Kink3" unique_id=295487616]
+layout_mode = 0
+offset_right = 80.0
+offset_bottom = 80.0
+mouse_filter = 2
+texture = ExtResource("11_1ikeo")
+expand_mode = 1
+
+[node name="Gradient" type="TextureRect" parent="Contents/ScrollContainer/Pets/Kink3" unique_id=1964406382]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+texture = SubResource("GradientTexture2D_jildg")
+
+[node name="Name" type="Label" parent="Contents/ScrollContainer/Pets/Kink3" unique_id=186441783]
+z_index = 1
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = -11.889999
+offset_right = 72.5
+grow_vertical = 0
+theme = SubResource("Theme_kb5ln")
+text = "Cake"
+label_settings = SubResource("LabelSettings_vox05")
+
+[node name="AddButton" type="Button" parent="Contents/ScrollContainer/Pets/Kink3" unique_id=1198424787]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+flat = true
+script = ExtResource("3_rdm5l")
+pet_scene = ExtResource("12_1ikeo")
+
+[node name="DeleteFrame" type="NinePatchRect" parent="Contents/ScrollContainer/Pets/Kink3" unique_id=1409204798]
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 62.0
+offset_top = 62.0
+offset_right = -3.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_6o53x")
+region_rect = Rect2(0, 0, 46, 19)
+patch_margin_left = 4
+patch_margin_top = 4
+patch_margin_right = 4
+patch_margin_bottom = 4
+
+[node name="DeleteButton" type="Button" parent="Contents/ScrollContainer/Pets/Kink3/DeleteFrame" unique_id=1819842718 node_paths=PackedStringArray("target_to_delete")]
+z_index = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 0.5
+offset_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+flat = true
+script = ExtResource("7_kdh73")
+target_to_delete = NodePath("../..")
+
+[node name="Icon" type="TextureRect" parent="Contents/ScrollContainer/Pets/Kink3/DeleteFrame" unique_id=1085808717]
 modulate = Color(1, 0, 0, 1)
 layout_mode = 1
 anchors_preset = 15
@@ -2502,5 +2700,7 @@ offset_bottom = 15.5
 script = ExtResource("4_4d77o")
 
 [connection signal="pressed" from="Contents/ScrollContainer/Pets/Kink/AddButton" to="Contents/ScrollContainer/Pets/Kink/AddButton" method="_on_pressed"]
+[connection signal="pressed" from="Contents/ScrollContainer/Pets/Kink2/AddButton" to="Contents/ScrollContainer/Pets/Kink2/AddButton" method="_on_pressed"]
+[connection signal="pressed" from="Contents/ScrollContainer/Pets/Kink3/AddButton" to="Contents/ScrollContainer/Pets/Kink3/AddButton" method="_on_pressed"]
 [connection signal="pressed" from="Background/Folders/Contents/VBoxContainer/Main" to="Background/Folders/Contents/VBoxContainer/Main" method="_on_pressed"]
 [connection signal="pressed" from="Background/CancelFrame/Cancel" to="." method="_on_cancel_pressed"]

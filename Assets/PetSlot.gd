@@ -1,6 +1,6 @@
 extends Button
 
-@export var pet_data: PetData
+@export var pet_scene: PackedScene
 @export var fade_duration := 0.3 # Duration of the fade-in effect in seconds
 
 func _ready() -> void:
@@ -8,17 +8,13 @@ func _ready() -> void:
 		pressed.connect(_on_pressed)
 
 func _on_pressed() -> void:
-	if not pet_data:
-		push_error("PetSlot button clicked, but pet_data is missing on " + name)
+	if not pet_scene:
+		push_error("pet_scene is not assigned on " + name)
 		return
 
-	if not pet_data.pet_scene:
-		push_error("pet_scene is not assigned inside PetData for " + pet_data.pet_name)
-		return
-
-	print("Spawning pet with fade-in tween: ", pet_data.pet_name)
+	print("Spawning pet with fade-in tween.")
 	
-	var new_pet = pet_data.pet_scene.instantiate() as Node2D
+	var new_pet = pet_scene.instantiate() as Node2D
 	if new_pet:
 		var main_scene = get_tree().current_scene
 		main_scene.add_child(new_pet)

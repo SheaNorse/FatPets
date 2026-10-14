@@ -1153,6 +1153,7 @@ script = ExtResource("1_k6nv4")
 invert_facing_direction = true
 floor_offset = 70.0
 is_edible = true
+can_eat = false
 
 [node name="Body" type="AnimatedSprite2D" parent="." unique_id=664938289]
 texture_filter = 1

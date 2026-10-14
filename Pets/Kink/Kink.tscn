@@ -1175,7 +1175,7 @@ point_count = 3
 [node name="Kink" type="CharacterBody2D" unique_id=808091606]
 script = ExtResource("1_log3j")
 floor_offset = 50.0
-is_edible = true
+can_eat = false
 food_points = 50
 
 [node name="Body" type="AnimatedSprite2D" parent="." unique_id=664938289]

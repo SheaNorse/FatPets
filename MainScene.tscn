@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://cb2gcs6gpcges"]
 
 [ext_resource type="PackedScene" uid="uid://byop432rxb1yp" path="res://Pets/Starboy/Starboy.tscn" id="1_rpqi1"]
-[ext_resource type="PackedScene" uid="uid://ddak8cmaa2cr3" path="res://Pets/Zypherium/Zypherium.tscn" id="1_torvr"]
 [ext_resource type="PackedScene" uid="uid://llreg4fc5c7c" path="res://Food/Cake.tscn" id="3_rpqi1"]
 [ext_resource type="Texture2D" uid="uid://dg0d750pxavlg" path="res://Assets/Shadow.png" id="4_5crlr"]
 [ext_resource type="Texture2D" uid="uid://n82ahwatq5j5" path="res://Assets/Title.png" id="5_hbc2u"]
@@ -184,20 +183,10 @@ _data = {
 
 [node name="MainScene" type="Node" unique_id=602105219]
 
-[node name="Zypherium" parent="." unique_id=808091606 instance=ExtResource("1_torvr")]
-
 [node name="Starboy" parent="." unique_id=865977200 instance=ExtResource("1_rpqi1")]
+can_eat = false
 
 [node name="Food14" parent="." unique_id=497172578 instance=ExtResource("3_rpqi1")]
-position = Vector2(-5, -53)
-
-[node name="Food17" parent="." unique_id=350793737 instance=ExtResource("3_rpqi1")]
-position = Vector2(-5, -53)
-
-[node name="Food18" parent="." unique_id=127382194 instance=ExtResource("3_rpqi1")]
-position = Vector2(-5, -53)
-
-[node name="Food19" parent="." unique_id=76177193 instance=ExtResource("3_rpqi1")]
 position = Vector2(-5, -53)
 
 [node name="Control" type="Control" parent="." unique_id=264279147]
