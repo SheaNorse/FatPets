@@ -4,17 +4,18 @@
 [ext_resource type="Texture2D" uid="uid://b1ud6wgf1eooc" path="res://Food/Cake.png" id="2_ti2rn"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_rf2cd"]
-radius = 28.0
+radius = 47.042534
 
 [node name="Food" type="Area2D" unique_id=82523170]
 z_index = 10
 texture_filter = 1
 script = ExtResource("1_myikp")
-floor_offset = 26.0
+floor_offset = 25.0
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1064762161]
-scale = Vector2(1.5, 1.5)
+scale = Vector2(2, 2)
 texture = ExtResource("2_ti2rn")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=309149802]
+position = Vector2(-1, 0)
 shape = SubResource("CircleShape2D_rf2cd")

@@ -10,22 +10,26 @@ config_version=5
 
 [application]
 
-config/name="FatPets"
+config/name="PetApp"
 run/main_scene="uid://cb2gcs6gpcges"
 config/features=PackedStringArray("4.7", "C#", "GL Compatibility")
 boot_splash/bg_color=Color(0.14117648, 0.14117648, 0.14117648, 0)
 boot_splash/show_image=false
-config/icon="res://icon.svg"
+config/icon="uid://h76owxnpqyrv"
+config/macos_native_icon="res://App/PetAppIcon.icns"
+config/windows_native_icon="res://App/PetAppIcon.ico"
 
 [autoload]
 
 DesktopPet="*uid://co04yugpp7caa"
+AddMenu="*uid://b8q28jehwmnsr"
+EventBus="*uid://dvbky6tt2vnip"
+FloorManager="*uid://dacvr34dslb83"
 
 [display]
 
-window/size/viewport_width=720
-window/size/viewport_height=480
 window/size/mode=3
+window/size/resizable=false
 window/size/borderless=true
 window/size/always_on_top=true
 window/size/transparent=true

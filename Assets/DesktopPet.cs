@@ -64,7 +64,6 @@ public partial class DesktopPet : Node
 	[DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
 	[DllImport("dwmapi.dll")] static extern int DwmExtendFrameIntoClientArea(IntPtr hwnd, ref MARGINS pMarInset);
 
-	// --- Taskbar detection (auto-hide aware) ---
 	[DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
 	static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
 
@@ -79,11 +78,12 @@ public partial class DesktopPet : Node
 	[DllImport("user32.dll")]
 	static extern IntPtr MonitorFromRect(ref RECT lprc, uint dwFlags);
 
+	[DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+
 	const int GWL_EXSTYLE = -20;
 	const int WS_EX_LAYERED = 0x80000;
 	const int WS_EX_TRANSPARENT = 0x20;
 
-	// SWP Flags with Anti-Flicker Guards
 	const uint SWP_NOSIZE = 0x0001;
 	const uint SWP_NOMOVE = 0x0002;
 	const uint SWP_NOZORDER = 0x0004;
@@ -94,11 +94,9 @@ public partial class DesktopPet : Node
 
 	const uint MONITOR_DEFAULTTONEAREST = 2;
 
-	// ShowWindow Commands
 	const int SW_HIDE = 0;
 	const int SW_SHOWNOACTIVATE = 4;
 
-	// DWM Anti-Flash Attributes
 	const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
 	const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
 
@@ -137,20 +135,16 @@ public partial class DesktopPet : Node
 	private double _taskbarRefreshTimer = 0.0;
 	private const double TaskbarRefreshIntervalSeconds = 1.0;
 
+	[Export] public double TopMostSafetyNetIntervalSeconds = 15.0;
 	private double _topMostRefreshTimer = 0.0;
-	private const double TopMostRefreshIntervalSeconds = 2.0;
+	private IntPtr _lastKnownForegroundWindow = IntPtr.Zero;
 
-	// --- Manual floor offset (fallback ONLY) ---
 	[Export] public int FloorOffsetPixels = 48;
-
-	// Cushion above auto-hidden taskbar
 	[Export] public int TaskbarRevealMarginPixels = 4;
 
-	// --- Hover debounce (anti-flicker) ---
-	private const float HoverDebounceSeconds = 0.05f;
+	private const float HoverDebounceSeconds = 0.03f;
 	private SceneTreeTimer _hoverDebounceTimer;
 
-	// --- Screen-enter fade tween ---
 	[Export] public float ScreenEnterFadeDurationSeconds = 0.4f;
 	[Export] public Tween.TransitionType ScreenEnterFadeTransition = Tween.TransitionType.Sine;
 	[Export] public Tween.EaseType ScreenEnterFadeEase = Tween.EaseType.Out;
@@ -210,11 +204,52 @@ public partial class DesktopPet : Node
 			RefreshTaskbarWindows();
 		}
 
+		if (_isWindows)
+		{
+			IntPtr currentForeground = GetForegroundWindow();
+			if (currentForeground != _lastKnownForegroundWindow)
+			{
+				_lastKnownForegroundWindow = currentForeground;
+				if (currentForeground != _hwnd)
+				{
+					ForceTopMost();
+				}
+			}
+		}
+
 		_topMostRefreshTimer += delta;
-		if (_topMostRefreshTimer >= TopMostRefreshIntervalSeconds)
+		if (_topMostRefreshTimer >= TopMostSafetyNetIntervalSeconds)
 		{
 			_topMostRefreshTimer = 0.0;
 			ForceTopMost();
+		}
+	}
+
+	public override void _UnhandledInput(InputEvent @event)
+	{
+		if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
+		{
+			if (keyEvent.Keycode >= Key.Key1 && keyEvent.Keycode <= Key.Key9)
+			{
+				int targetScreenIndex = (int)keyEvent.Keycode - (int)Key.Key1;
+
+				if (targetScreenIndex < DisplayServer.GetScreenCount())
+				{
+					GD.Print($"Switching workspace elements to Screen Index: {targetScreenIndex}");
+					MoveAllPetsToScreen(targetScreenIndex);
+				}
+			}
+		}
+	}
+
+	public void MoveAllPetsToScreen(int screenIndex)
+	{
+		List<Node2D> elements = new List<Node2D>();
+		FindInteractablesRecursive(GetTree().Root, elements);
+
+		foreach (Node2D element in elements)
+		{
+			SwitchToScreen(screenIndex, element);
 		}
 	}
 
@@ -266,6 +301,8 @@ public partial class DesktopPet : Node
 		if (_isClickThroughEnabled == enabled && !forceFrameRefresh) return;
 		_isClickThroughEnabled = enabled;
 
+		if (!_isWindows || _hwnd == IntPtr.Zero) return;
+
 		int currentStyle = GetWindowLong(_hwnd, GWL_EXSTYLE);
 		int newStyle = enabled
 			? (currentStyle | WS_EX_LAYERED | WS_EX_TRANSPARENT)
@@ -280,12 +317,20 @@ public partial class DesktopPet : Node
 		}
 	}
 
-	public void ReportHoverState(bool isHovering, string objectId)
+	// --- Enhanced Hover State Reporting ---
+	public void ReportHoverState(bool isHovering, Variant rawObjectId)
 	{
+		string objectId = rawObjectId.ToString();
+		if (string.IsNullOrEmpty(objectId)) return;
+
 		if (isHovering)
+		{
 			_hoveredObjects.Add(objectId);
+		}
 		else
+		{
 			_hoveredObjects.Remove(objectId);
+		}
 
 		_hoverDebounceTimer?.Dispose();
 		_hoverDebounceTimer = GetTree().CreateTimer(HoverDebounceSeconds);
@@ -293,10 +338,26 @@ public partial class DesktopPet : Node
 		{
 			if (!GodotObject.IsInstanceValid(this)) return;
 
-			SetClickThrough(_hoveredObjects.Count == 0);
-			if (_hoveredObjects.Count == 0)
+			bool shouldDisableClickThrough = _hoveredObjects.Count > 0;
+			SetClickThrough(!shouldDisableClickThrough);
+
+			if (!shouldDisableClickThrough)
+			{
 				ForceTopMost();
+			}
 		};
+	}
+
+	public void UnregisterHoverObject(Variant rawObjectId)
+	{
+		string objectId = rawObjectId.ToString();
+		if (string.IsNullOrEmpty(objectId)) return;
+
+		if (_hoveredObjects.Contains(objectId))
+		{
+			_hoveredObjects.Remove(objectId);
+			SetClickThrough(_hoveredObjects.Count == 0);
+		}
 	}
 
 	public void ClearAllHoverStates()
@@ -341,42 +402,46 @@ public partial class DesktopPet : Node
 
 	private int? TryGetTaskbarAdjustedFloor(RECT screenRect, int screenIndex)
 	{
-		if (!_isWindows || _taskbarWindows.Count == 0) return null;
-
-		const int edgeEpsilon = 8;
-		RECT screenRectCopy = screenRect;
-		IntPtr targetMonitor = MonitorFromRect(ref screenRectCopy, MONITOR_DEFAULTTONEAREST);
-
-		foreach (IntPtr hwnd in _taskbarWindows)
-		{
-			if (!GetWindowRect(hwnd, out RECT tb)) continue;
-
-			IntPtr taskbarMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
-			bool sameMonitor = taskbarMonitor == targetMonitor && taskbarMonitor != IntPtr.Zero;
-
-			int overlapLeft = Math.Max(tb.Left, screenRect.Left);
-			int overlapRight = Math.Min(tb.Right, screenRect.Right);
-			int overlapTop = Math.Max(tb.Top, screenRect.Top);
-			int overlapBottom = Math.Min(tb.Bottom, screenRect.Bottom);
-			bool overlaps = overlapRight > overlapLeft && overlapBottom > overlapTop;
-
-			if (!sameMonitor && !overlaps) continue;
-
-			bool dockedBottom = Math.Abs(tb.Bottom - screenRect.Bottom) <= edgeEpsilon && tb.Width >= tb.Height;
-			if (!dockedBottom) continue;
-
-			int margin = (tb.Height <= 12) ? TaskbarRevealMarginPixels : 0;
-			int floor = tb.Top - margin;
-			return Mathf.Clamp(floor, screenRect.Top, screenRect.Bottom);
-		}
-
 		Rect2I usable = DisplayServer.ScreenGetUsableRect(screenIndex);
 		int usableBottom = usable.Position.Y + usable.Size.Y;
+		int taskbarHeight = screenRect.Bottom - usableBottom;
 
-		if (usableBottom < screenRect.Bottom - 2)
+		if (_isWindows && _taskbarWindows.Count > 0)
+		{
+			const int edgeEpsilon = 8;
+			RECT screenRectCopy = screenRect;
+			IntPtr targetMonitor = MonitorFromRect(ref screenRectCopy, MONITOR_DEFAULTTONEAREST);
+
+			foreach (IntPtr hwnd in _taskbarWindows)
+			{
+				if (!GetWindowRect(hwnd, out RECT tb)) continue;
+
+				IntPtr taskbarMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+				bool sameMonitor = taskbarMonitor == targetMonitor && taskbarMonitor != IntPtr.Zero;
+
+				int overlapLeft = Math.Max(tb.Left, screenRect.Left);
+				int overlapRight = Math.Min(tb.Right, screenRect.Right);
+				int overlapTop = Math.Max(tb.Top, screenRect.Top);
+				int overlapBottom = Math.Min(tb.Bottom, screenRect.Bottom);
+				bool overlaps = overlapRight > overlapLeft && overlapBottom > overlapTop;
+
+				if (!sameMonitor && !overlaps) continue;
+
+				bool dockedBottom = Math.Abs(tb.Bottom - screenRect.Bottom) <= edgeEpsilon && tb.Width >= tb.Height;
+				if (!dockedBottom) continue;
+
+				int margin = (tb.Height <= 12) ? TaskbarRevealMarginPixels : 0;
+				int floor = tb.Top - margin;
+				return Mathf.Clamp(floor, screenRect.Top, screenRect.Bottom);
+			}
+		}
+
+		if (taskbarHeight > 2)
+		{
 			return usableBottom;
+		}
 
-		return screenRect.Bottom - 1;
+		return screenRect.Bottom;
 	}
 
 	public int GetFloorPositionAtPoint(int x, int y)
@@ -535,8 +600,7 @@ public partial class DesktopPet : Node
 		DisplayServer.WindowSetPosition(screenPos);
 
 		ApplyAntiFlashAttributes();
-
-		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		
 		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
 
 		if (!GodotObject.IsInstanceValid(this)) return;

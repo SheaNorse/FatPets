@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="PetData" format=3 uid="uid://o2hlqp8vmv2n"]
+
+[ext_resource type="Script" uid="uid://ddbyovfktooku" path="res://Assets/PetData.gd" id="1_1gcod"]
+[ext_resource type="PackedScene" uid="uid://6h1o4uvweqfv" path="res://Pets/Kink/Kink.tscn" id="1_ogyeh"]
+[ext_resource type="Texture2D" uid="uid://bkkd23k2s4fvf" path="res://Kink.png" id="2_opdsa"]
+
+[resource]
+script = ExtResource("1_1gcod")
+portrait = ExtResource("2_opdsa")
+pet_scene = ExtResource("1_ogyeh")
+metadata/_custom_type_script = "uid://ddbyovfktooku"
